@@ -650,6 +650,121 @@ code {
   background: transparent;
 }
 
+.settings-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.settings-profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(135deg, var(--surface), var(--surface-muted));
+}
+
+.settings-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: rgba(255, 107, 74, 0.14);
+  border: 1px solid rgba(255, 107, 74, 0.3);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--accent-deep);
+  overflow: hidden;
+}
+
+.settings-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.settings-profile-body {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.settings-handle {
+  color: var(--ink-soft);
+}
+
+.settings-email {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.settings-card {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-field {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.settings-input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 107, 74, 0.2);
+  background: var(--surface-muted);
+  padding: 12px 14px;
+  font-size: 1rem;
+  color: var(--ink);
+  outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-input:focus {
+  border-color: rgba(255, 107, 74, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-save {
+  padding: 10px 22px;
+}
+
+.danger-card {
+  margin-top: 8px;
+  border: 1px solid rgba(255, 107, 74, 0.28);
+  background: linear-gradient(135deg, rgba(255, 107, 74, 0.08), transparent);
+}
+
+.danger-title {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ff5b5b, #d62a2a);
+  border: none;
+  color: #fff;
+}
+
+[data-theme="dark"] .settings-input {
+  background: #251f1b;
+  border-color: rgba(255, 131, 95, 0.25);
+}
+
+[data-theme="dark"] .settings-input:focus {
+  box-shadow: 0 0 0 3px rgba(255, 131, 95, 0.2);
+}
+
 @media (max-width: 900px) {
   .upload-header {
     flex-direction: column;
