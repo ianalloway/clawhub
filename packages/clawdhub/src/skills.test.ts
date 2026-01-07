@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { strToU8, zipSync } from 'fflate'
 import { describe, expect, it } from 'vitest'
+import type { SkillOrigin } from './skills'
 import {
   buildSkillFingerprint,
   extractZipToDir,
@@ -177,7 +178,7 @@ describe('skills', () => {
     )
     expect(await readSkillOrigin(workdir)).toBeNull()
 
-    const origin = {
+    const origin: SkillOrigin = {
       version: 1,
       registry: 'https://example.com',
       slug: 'demo',
