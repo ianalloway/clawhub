@@ -32,6 +32,15 @@ export type PublishVersionArgs = {
   changelog: string
   tags?: string[]
   forkOf?: { slug: string; version?: string }
+  source?: {
+    kind: 'github'
+    url: string
+    repo: string
+    ref: string
+    commit: string
+    path: string
+    importedAt: number
+  }
   files: Array<{
     path: string
     size: number
@@ -81,7 +90,7 @@ export async function publishVersionForUser(
   const readmeText = await fetchText(ctx, readmeFile.storageId)
   const frontmatter = parseFrontmatter(readmeText)
   const clawdis = parseClawdisMetadata(frontmatter)
-  const metadata = getFrontmatterMetadata(frontmatter)
+  const metadata = mergeSourceIntoMetadata(getFrontmatterMetadata(frontmatter), args.source)
 
   const otherFiles = [] as Array<{ path: string; content: string }>
   for (const file of sanitizedFiles) {
@@ -168,6 +177,27 @@ export async function publishVersionForUser(
   })
 
   return publishResult
+}
+
+function mergeSourceIntoMetadata(metadata: unknown, source: PublishVersionArgs['source']) {
+  if (!source) return metadata === undefined ? undefined : metadata
+  const sourceValue = {
+    kind: source.kind,
+    url: source.url,
+    repo: source.repo,
+    ref: source.ref,
+    commit: source.commit,
+    path: source.path,
+    importedAt: source.importedAt,
+  }
+
+  if (!metadata) return { source: sourceValue }
+  if (typeof metadata !== 'object' || Array.isArray(metadata)) return { source: sourceValue }
+  return { ...(metadata as Record<string, unknown>), source: sourceValue }
+}
+
+export const __test = {
+  mergeSourceIntoMetadata,
 }
 
 export async function queueHighlightedWebhook(ctx: MutationCtx, skillId: Id<'skills'>) {

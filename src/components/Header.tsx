@@ -66,6 +66,7 @@ export default function Header() {
           <Link to="/upload" search={{ updateSlug: undefined }}>
             Upload
           </Link>
+          <Link to="/import">Import</Link>
           <Link to="/search" search={{ q: undefined, highlighted: undefined }}>
             Search
           </Link>
@@ -99,6 +100,9 @@ export default function Header() {
                   <Link to="/upload" search={{ updateSlug: undefined }}>
                     Upload
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/import">Import</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/search" search={{ q: undefined, highlighted: undefined }}>

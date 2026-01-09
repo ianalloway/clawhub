@@ -13,6 +13,7 @@ import { Route as UploadRouteImport } from './routes/upload'
 import { Route as StarsRouteImport } from './routes/stars'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as ImportRouteImport } from './routes/import'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -40,6 +41,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportRoute = ImportRouteImport.update({
+  id: '/import',
+  path: '/import',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/search': typeof SearchRoute
+  '/import': typeof ImportRoute
   '/settings': typeof SettingsRoute
   '/stars': typeof StarsRoute
   '/upload': typeof UploadRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/search': typeof SearchRoute
+  '/import': typeof ImportRoute
   '/settings': typeof SettingsRoute
   '/stars': typeof StarsRoute
   '/upload': typeof UploadRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
   '/search': typeof SearchRoute
+  '/import': typeof ImportRoute
   '/settings': typeof SettingsRoute
   '/stars': typeof StarsRoute
   '/upload': typeof UploadRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/search'
+    | '/import'
     | '/settings'
     | '/stars'
     | '/upload'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/search'
+    | '/import'
     | '/settings'
     | '/stars'
     | '/upload'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/search'
+    | '/import'
     | '/settings'
     | '/stars'
     | '/upload'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRoute
   SearchRoute: typeof SearchRoute
+  ImportRoute: typeof ImportRoute
   SettingsRoute: typeof SettingsRoute
   StarsRoute: typeof StarsRoute
   UploadRoute: typeof UploadRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/import': {
+      id: '/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof ImportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   DashboardRoute: DashboardRoute,
   SearchRoute: SearchRoute,
+  ImportRoute: ImportRoute,
   SettingsRoute: SettingsRoute,
   StarsRoute: StarsRoute,
   UploadRoute: UploadRoute,

@@ -217,12 +217,14 @@ export function mergeScan(
     skillsByRoot: Record<string, SkillFolder[]>
     skills: SkillFolder[]
     rootsWithSkills: string[]
+    rootLabels: Record<string, string>
   },
   right: {
     roots: string[]
     skillsByRoot: Record<string, SkillFolder[]>
     skills: SkillFolder[]
     rootsWithSkills: string[]
+    rootLabels: Record<string, string>
   },
 ) {
   const mergedRoots = Array.from(new Set([...left.roots, ...right.roots]))
@@ -230,13 +232,14 @@ export function mergeScan(
   for (const root of mergedRoots) {
     skillsByRoot[root] = right.skillsByRoot[root] ?? left.skillsByRoot[root] ?? []
   }
+  const rootLabels: Record<string, string> = { ...left.rootLabels, ...right.rootLabels }
   const byFolder = new Map<string, SkillFolder>()
   for (const entry of [...left.skills, ...right.skills]) {
     byFolder.set(entry.folder, entry)
   }
   const skills = Array.from(byFolder.values())
   const rootsWithSkills = mergedRoots.filter((root) => (skillsByRoot[root]?.length ?? 0) > 0)
-  return { roots: mergedRoots, skillsByRoot, skills, rootsWithSkills }
+  return { roots: mergedRoots, skillsByRoot, skills, rootsWithSkills, rootLabels }
 }
 
 async function dedupeRoots(roots: string[]) {

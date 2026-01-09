@@ -57,7 +57,13 @@ vi.mock('../scanSkills.js', () => ({
   getFallbackSkillRoots: vi.fn(() => []),
 }))
 
-const mockResolveClawdbotSkillRoots = vi.fn(async () => ({ roots: [], labels: {} }))
+const mockResolveClawdbotSkillRoots = vi.fn(
+  async () =>
+    ({
+      roots: [] as string[],
+      labels: {} as Record<string, string>,
+    }) as const,
+)
 vi.mock('../clawdbotConfig.js', () => ({
   resolveClawdbotSkillRoots: () => mockResolveClawdbotSkillRoots(),
 }))
