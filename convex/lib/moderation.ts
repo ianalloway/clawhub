@@ -1,6 +1,10 @@
 import type { Doc } from '../_generated/dataModel'
 
 const FLAG_RULES: Array<{ flag: string; pattern: RegExp }> = [
+  // Known-bad / known-suspicious identifiers.
+  // NOTE: keep these narrowly scoped; use staff review to confirm removals.
+  { flag: 'blocked.malware', pattern: /(keepcold131\/ClawdAuthenticatorTool|ClawdAuthenticatorTool)/i },
+
   { flag: 'suspicious.keyword', pattern: /(malware|stealer|phish|phishing|keylogger)/i },
   { flag: 'suspicious.secrets', pattern: /(api[-_ ]?key|token|password|private key|secret)/i },
   { flag: 'suspicious.crypto', pattern: /(wallet|seed phrase|mnemonic|crypto)/i },

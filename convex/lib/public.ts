@@ -53,6 +53,8 @@ export function toPublicUser(user: Doc<'users'> | null | undefined): PublicUser 
 
 export function toPublicSkill(skill: Doc<'skills'> | null | undefined): PublicSkill | null {
   if (!skill || skill.softDeletedAt) return null
+  if (skill.moderationStatus && skill.moderationStatus !== 'active') return null
+  if (skill.moderationFlags?.includes('blocked.malware')) return null
   return {
     _id: skill._id,
     _creationTime: skill._creationTime,
@@ -73,6 +75,8 @@ export function toPublicSkill(skill: Doc<'skills'> | null | undefined): PublicSk
 
 export function toPublicSoul(soul: Doc<'souls'> | null | undefined): PublicSoul | null {
   if (!soul || soul.softDeletedAt) return null
+  if (soul.moderationStatus && soul.moderationStatus !== 'active') return null
+  if (soul.moderationFlags?.includes('blocked.malware')) return null
   return {
     _id: soul._id,
     _creationTime: soul._creationTime,
