@@ -7,7 +7,7 @@ export type SoulSeed = {
 }
 
 export const SOUL_SEED_HANDLE = 'seed'
-export const SOUL_SEED_DISPLAY_NAME = 'ClawHub Seed'
+export const SOUL_SEED_DISPLAY_NAME = 'OpenClaw Seed'
 export const SOUL_SEED_KEY = 'seed:souls-v1'
 
 // biome-ignore format: seed payload

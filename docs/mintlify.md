@@ -20,7 +20,7 @@ Example (starter):
 
 ```json
 {
-  "name": "ClawHub",
+  "name": "OpenClaw",
   "logo": "public/logo.svg",
   "navigation": [
     { "group": "Start", "pages": ["docs/README", "docs/quickstart"] },

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   detectSiteMode,
   detectSiteModeFromUrl,
-  getClawHubSiteUrl,
+  getOpenClawSiteUrl,
   getOnlyCrabsHost,
   getOnlyCrabsSiteUrl,
   getSiteDescription,
@@ -42,9 +42,9 @@ afterEach(() => {
 
 describe('site helpers', () => {
   it('returns default and env configured site URLs', () => {
-    expect(getClawHubSiteUrl()).toBe('https://clawhub.ai')
+    expect(getOpenClawSiteUrl()).toBe('https://clawhub.ai')
     withMetaEnv({ VITE_SITE_URL: 'https://example.com' }, () => {
-      expect(getClawHubSiteUrl()).toBe('https://example.com')
+      expect(getOpenClawSiteUrl()).toBe('https://example.com')
     })
   })
 
@@ -118,10 +118,10 @@ describe('site helpers', () => {
   })
 
   it('derives site metadata from mode', () => {
-    expect(getSiteName('skills')).toBe('ClawHub')
+    expect(getSiteName('skills')).toBe('OpenClaw')
     expect(getSiteName('souls')).toBe('SoulHub')
 
-    expect(getSiteDescription('skills')).toContain('ClawHub')
+    expect(getSiteDescription('skills')).toContain('OpenClaw')
     expect(getSiteDescription('souls')).toContain('SoulHub')
 
     expect(getSiteUrlForMode('skills')).toBe('https://clawhub.ai')

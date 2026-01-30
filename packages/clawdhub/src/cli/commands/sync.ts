@@ -30,7 +30,7 @@ import type { Candidate, LocalSkill, SyncOptions } from './syncTypes.js'
 
 export async function cmdSync(opts: GlobalOpts, options: SyncOptions, inputAllowed: boolean) {
   const allowPrompt = isInteractive() && inputAllowed !== false
-  intro('ClawHub sync')
+  intro('OpenClaw sync')
 
   const cfg = await readGlobalConfig()
   const token = cfg?.token

@@ -6,7 +6,7 @@ read_when:
 
 # Webhooks (Discord)
 
-ClawHub can post Discord embeds when skills are published or highlighted.
+OpenClaw can post Discord embeds when skills are published or highlighted.
 
 ## Setup
 
@@ -44,7 +44,7 @@ Discord receives a JSON payload with a single embed:
         { "name": "Owner", "value": "@owner", "inline": true },
         { "name": "Tags", "value": "latest, discord", "inline": false }
       ],
-      "footer": { "text": "ClawHub" }
+      "footer": { "text": "OpenClaw" }
     }
   ]
 }

@@ -16,7 +16,7 @@
 - CLI: support OpenClaw configuration files (`OPENCLAW_CONFIG_PATH` / `OPENCLAW_STATE_DIR`).
 
 ### Changed
-- Brand: rebrand to ClawHub and publish CLI as `clawhub` (legacy `clawdhub` supported).
+- Brand: rebrand to OpenClaw and publish CLI as `clawhub` (legacy `clawdhub` supported).
 - Domain: default site/registry now `https://clawhub.ai`; `.well-known/clawhub.json` preferred.
 - Theme: persist theme under `clawhub-theme` (legacy key still read).
 

@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "ClawHub API",
+    "title": "OpenClaw API",
     "version": "1.0.0",
     "description": "Public REST API for skills. Rate limits: read 120/min per IP + 600/min per key; write 30/min per IP + 120/min per key."
   },

@@ -4,7 +4,7 @@ const DEFAULT_CLAWHUB_SITE_URL = 'https://clawhub.ai'
 const DEFAULT_ONLYCRABS_SITE_URL = 'https://onlycrabs.ai'
 const DEFAULT_ONLYCRABS_HOST = 'onlycrabs.ai'
 
-export function getClawHubSiteUrl() {
+export function getOpenClawSiteUrl() {
   return import.meta.env.VITE_SITE_URL ?? DEFAULT_CLAWHUB_SITE_URL
 }
 
@@ -70,15 +70,15 @@ export function getSiteMode(): SiteMode {
 }
 
 export function getSiteName(mode: SiteMode = getSiteMode()) {
-  return mode === 'souls' ? 'SoulHub' : 'ClawHub'
+  return mode === 'souls' ? 'SoulHub' : 'OpenClaw'
 }
 
 export function getSiteDescription(mode: SiteMode = getSiteMode()) {
   return mode === 'souls'
     ? 'SoulHub — the home for SOUL.md bundles and personal system lore.'
-    : 'ClawHub — a fast skill registry for agents, with vector search.'
+    : 'OpenClaw — a fast skill registry for agents, with vector search.'
 }
 
 export function getSiteUrlForMode(mode: SiteMode = getSiteMode()) {
-  return mode === 'souls' ? getOnlyCrabsSiteUrl() : getClawHubSiteUrl()
+  return mode === 'souls' ? getOnlyCrabsSiteUrl() : getOpenClawSiteUrl()
 }

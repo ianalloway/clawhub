@@ -20,7 +20,7 @@ import { readGlobalConfig } from './config.js'
 const program = new Command()
   .name('clawhub')
   .description(
-    `${styleTitle(`ClawHub CLI ${getCliBuildLabel()}`)}\n${styleEnvBlock(
+    `${styleTitle(`OpenClaw CLI ${getCliBuildLabel()}`)}\n${styleEnvBlock(
       'install, update, search, and publish agent skills.',
     )}`,
   )

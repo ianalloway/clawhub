@@ -127,7 +127,7 @@ const CALLBACK_HTML = `<!doctype html>
 <html lang="en">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ClawHub CLI Login</title>
+  <title>OpenClaw CLI Login</title>
   <style>
     :root { color-scheme: light dark; }
     body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; padding: 24px; }

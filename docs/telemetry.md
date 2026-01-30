@@ -7,7 +7,7 @@ read_when:
 
 # Telemetry
 
-ClawHub uses **minimal telemetry** to compute **install counts** (what’s actually in use) and to power better sorting/filtering.
+OpenClaw uses **minimal telemetry** to compute **install counts** (what’s actually in use) and to power better sorting/filtering.
 This is based on the CLI `clawhub sync` command.
 
 ## When telemetry is collected
@@ -70,7 +70,7 @@ This is evaluated lazily (on the next telemetry report) to avoid background jobs
 
 ## Transparency + user controls
 
-ClawHub provides a private “Installed” tab on your own profile:
+OpenClaw provides a private “Installed” tab on your own profile:
 
 - Shows the exact roots + installed skills we store.
 - Includes a **JSON export** view.

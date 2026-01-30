@@ -1,12 +1,12 @@
-# ClawHub
+# OpenClaw
 
 <p align="center">
-  <a href="https://github.com/clawdbot/clawhub/actions/workflows/ci.yml?branch=main"><img src="https://img.shields.io/github/actions/workflow/status/clawdbot/clawhub/ci.yml?branch=main&style=for-the-badge" alt="CI status"></a>
+  <a href="https://github.com/openclaw/clawhub/actions/workflows/ci.yml?branch=main"><img src="https://img.shields.io/github/actions/workflow/status/openclaw/clawhub/ci.yml?branch=main&style=for-the-badge" alt="CI status"></a>
   <a href="https://discord.gg/clawd"><img src="https://img.shields.io/discord/1456350064065904867?label=Discord&logo=discord&logoColor=white&color=5865F2&style=for-the-badge" alt="Discord"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
 
-ClawHub is the **public skill registry for Clawdbot**: publish, version, and search text-based agent skills (a `SKILL.md` plus supporting files).
+OpenClaw is the **public skill registry for Clawdbot**: publish, version, and search text-based agent skills (a `SKILL.md` plus supporting files).
 It’s designed for fast browsing + a CLI-friendly API, with moderation hooks and vector search.
 
 onlycrabs.ai is the **SOUL.md registry**: publish and share system lore the same way you publish skills.
@@ -27,7 +27,7 @@ onlycrabs.ai: `https://onlycrabs.ai`
 
 - Entry point is host-based: `onlycrabs.ai`.
 - On the onlycrabs.ai host, the home page and nav default to souls.
-- On ClawHub, souls live under `/souls`.
+- On OpenClaw, souls live under `/souls`.
 - Soul bundles only accept `SOUL.md` for now (no extra files).
 
 ## How it works (high level)
@@ -39,7 +39,7 @@ onlycrabs.ai: `https://onlycrabs.ai`
 
 ## Telemetry
 
-ClawHub tracks minimal **install telemetry** (to compute install counts) when you run `clawhub sync` while logged in.
+OpenClaw tracks minimal **install telemetry** (to compute install counts) when you run `clawhub sync` while logged in.
 Disable via:
 
 ```bash
@@ -95,7 +95,7 @@ This writes `JWT_PRIVATE_KEY` + `JWKS` to the deployment and prints values for y
 
 ## Nix plugins (nixmode skills)
 
-ClawHub can store a nix-clawdbot plugin pointer in SKILL frontmatter so the registry knows which
+OpenClaw can store a nix-clawdbot plugin pointer in SKILL frontmatter so the registry knows which
 Nix package bundle to install. A nix plugin is different from a regular skill pack: it bundles the
 skill pack, the CLI binary, and its config flags/requirements together.
 
