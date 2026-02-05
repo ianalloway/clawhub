@@ -14,7 +14,7 @@ export type SkillZipMeta = {
 
 type ZipInput = Record<string, Uint8Array | [Uint8Array, { mtime?: Date }]>
 
-const FIXED_ZIP_DATE = new Date('1980-01-01T00:00:00Z')
+const FIXED_ZIP_DATE = new Date(1980, 0, 1, 0, 0, 0)
 
 export function buildSkillMeta(meta: SkillZipMeta) {
   return {
