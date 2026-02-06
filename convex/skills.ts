@@ -511,17 +511,6 @@ export const getBySlug = query({
 
     // Non-owners can see malware-blocked skills (transparency), but not other hidden states
     // Owners can see all their moderated skills
-    console.log('[getBySlug]', {
-      slug: args.slug,
-      isOwner,
-      userId,
-      skillOwner: skill.ownerUserId,
-      moderationStatus: skill.moderationStatus,
-      moderationReason: skill.moderationReason,
-      publicSkill: !!publicSkill,
-      isPendingScan,
-      isMalwareBlocked,
-    })
     if (!publicSkill && !isOwner && !isMalwareBlocked) return null
 
     // For owners viewing their moderated skill, construct the response manually
