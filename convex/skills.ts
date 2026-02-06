@@ -1227,6 +1227,8 @@ export const getPendingScanSkillsInternal = internalQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 10
+    // Fetch more than needed so we can randomize selection
+    const poolSize = Math.min(limit * 5, 200)
     const skills = await ctx.db
       .query('skills')
       .filter((q) =>
@@ -1235,7 +1237,14 @@ export const getPendingScanSkillsInternal = internalQuery({
           q.eq(q.field('moderationReason'), 'pending.scan'),
         ),
       )
-      .take(limit)
+      .take(poolSize)
+
+    // Shuffle and take the requested limit (Fisher-Yates)
+    for (let i = skills.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[skills[i], skills[j]] = [skills[j], skills[i]]
+    }
+    const selected = skills.slice(0, limit)
 
     const results: Array<{
       skillId: Id<'skills'>
@@ -1243,7 +1252,7 @@ export const getPendingScanSkillsInternal = internalQuery({
       sha256hash: string | null
     }> = []
 
-    for (const skill of skills) {
+    for (const skill of selected) {
       const version = skill.latestVersionId ? await ctx.db.get(skill.latestVersionId) : null
       results.push({
         skillId: skill._id,
@@ -1253,6 +1262,47 @@ export const getPendingScanSkillsInternal = internalQuery({
     }
 
     return results
+  },
+})
+
+/**
+ * Health check query to monitor scan queue status
+ */
+export const getScanQueueHealthInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const pending = await ctx.db
+      .query('skills')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('moderationStatus'), 'hidden'),
+          q.eq(q.field('moderationReason'), 'pending.scan'),
+        ),
+      )
+      .collect()
+
+    const now = Date.now()
+    const oneHourAgo = now - 60 * 60 * 1000
+    const oneDayAgo = now - 24 * 60 * 60 * 1000
+
+    let staleCount = 0
+    let veryStaleCount = 0
+    let oldestTimestamp = now
+
+    for (const skill of pending) {
+      const createdAt = skill.createdAt ?? skill._creationTime
+      if (createdAt < oldestTimestamp) oldestTimestamp = createdAt
+      if (createdAt < oneHourAgo) staleCount++
+      if (createdAt < oneDayAgo) veryStaleCount++
+    }
+
+    return {
+      queueSize: pending.length,
+      staleCount, // pending > 1 hour
+      veryStaleCount, // pending > 24 hours
+      oldestAgeMinutes: Math.round((now - oldestTimestamp) / 60000),
+      healthy: pending.length < 50 && veryStaleCount === 0,
+    }
   },
 })
 

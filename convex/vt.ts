@@ -265,21 +265,31 @@ export const pollPendingScans = internalAction({
     const apiKey = process.env.VT_API_KEY
     if (!apiKey) {
       console.log('[vt:pollPendingScans] VT_API_KEY not configured, skipping')
-      return { processed: 0, updated: 0 }
+      return { processed: 0, updated: 0, healthy: false }
     }
 
     const batchSize = args.batchSize ?? 10
 
-    // Get skills pending scan
+    // Check queue health
+    const health = await ctx.runQuery(internal.skills.getScanQueueHealthInternal, {})
+    if (!health.healthy) {
+      console.warn(
+        `[vt:pollPendingScans] QUEUE UNHEALTHY: ${health.queueSize} pending, ${health.veryStaleCount} stale >24h, oldest ${health.oldestAgeMinutes}m`,
+      )
+    }
+
+    // Get skills pending scan (randomized selection)
     const pendingSkills = await ctx.runQuery(internal.skills.getPendingScanSkillsInternal, {
       limit: batchSize,
     })
 
     if (pendingSkills.length === 0) {
-      return { processed: 0, updated: 0 }
+      return { processed: 0, updated: 0, healthy: health.healthy, queueSize: health.queueSize }
     }
 
-    console.log(`[vt:pollPendingScans] Checking ${pendingSkills.length} pending skills`)
+    console.log(
+      `[vt:pollPendingScans] Checking ${pendingSkills.length} pending skills (queue: ${health.queueSize})`,
+    )
 
     let updated = 0
     for (const { skillId, versionId, sha256hash } of pendingSkills) {
@@ -330,7 +340,12 @@ export const pollPendingScans = internalAction({
     }
 
     console.log(`[vt:pollPendingScans] Processed ${pendingSkills.length}, updated ${updated}`)
-    return { processed: pendingSkills.length, updated }
+    return {
+      processed: pendingSkills.length,
+      updated,
+      healthy: health.healthy,
+      queueSize: health.queueSize,
+    }
   },
 })
 
