@@ -1,13 +1,21 @@
 # Changelog
 
-## Unreleased
+## 0.6.1 - Unreleased
 
 ### Added
+- Security: add LLM-based security evaluation during skill publish.
+- Parsing: recognize `metadata.openclaw` frontmatter and evaluate all skill files for requirements.
 
 ### Changed
+- Performance: lazy-load Monaco diff viewer on demand (thanks @alexjcm, #212).
+- Search: improve recall/ranking with lexical fallback and relevance prioritization.
+- Moderation UX: collapse OpenClaw analysis by default; update spacing and default reasoning model.
 
 ### Fixed
 - Upload gate: handle GitHub API rate limits and optional authenticated lookup token (thanks @superlowburn, #246).
+- HTTP: remove `allowH2` from Undici agent to prevent `fetch failed` on Node.js 22+ (#245).
+- VirusTotal: fix scan sync race conditions and retry behavior in scan/backfill paths.
+- Metadata: tolerate trailing commas in JSON metadata.
 
 ## 0.6.0 - 2026-02-10
 
