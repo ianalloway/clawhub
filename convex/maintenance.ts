@@ -284,6 +284,37 @@ export const scheduleBackfillSkillSummaries: ReturnType<typeof action> = action(
   },
 })
 
+export const continueSkillSummaryBackfillJobInternal = internalAction({
+  args: {
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+    useAi: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<BackfillActionResult> => {
+    const result = await backfillSkillSummariesInternalHandler(ctx, {
+      dryRun: false,
+      cursor: args.cursor,
+      batchSize: args.batchSize ?? DEFAULT_BATCH_SIZE,
+      maxBatches: 1,
+      useAi: Boolean(args.useAi),
+    })
+
+    if (!result.isDone && result.cursor) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.maintenance.continueSkillSummaryBackfillJobInternal,
+        {
+          cursor: result.cursor,
+          batchSize: args.batchSize ?? DEFAULT_BATCH_SIZE,
+          useAi: Boolean(args.useAi),
+        },
+      )
+    }
+
+    return result
+  },
+})
+
 type FingerprintBackfillStats = {
   versionsScanned: number
   versionsPatched: number
