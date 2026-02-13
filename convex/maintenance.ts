@@ -5,12 +5,20 @@ import type { ActionCtx } from './_generated/server'
 import { action, internalAction, internalMutation, internalQuery } from './_generated/server'
 import { assertRole, requireUserFromAction } from './lib/access'
 import { buildSkillSummaryBackfillPatch, type ParsedSkillData } from './lib/skillBackfill'
+import {
+  computeQualitySignals,
+  evaluateQuality,
+  getTrustTier,
+  type TrustTier,
+} from './lib/skillQuality'
 import { hashSkillFiles } from './lib/skills'
 
 const DEFAULT_BATCH_SIZE = 50
 const MAX_BATCH_SIZE = 200
 const DEFAULT_MAX_BATCHES = 20
 const MAX_MAX_BATCHES = 200
+const DEFAULT_EMPTY_SKILL_MAX_README_BYTES = 8000
+const DEFAULT_EMPTY_SKILL_NOMINATION_THRESHOLD = 3
 
 type BackfillStats = {
   skillsScanned: number
@@ -830,6 +838,379 @@ export const scheduleBackfillSkillBadgeTable: ReturnType<typeof action> = action
       maxBatches: DEFAULT_MAX_BATCHES,
     })
     return { ok: true as const }
+  },
+})
+
+type EmptySkillCleanupPageItem = {
+  skillId: Id<'skills'>
+  slug: string
+  ownerUserId: Id<'users'>
+  latestVersionId?: Id<'skillVersions'>
+  softDeletedAt?: number
+  summary?: string
+}
+
+type EmptySkillCleanupPageResult = {
+  items: EmptySkillCleanupPageItem[]
+  cursor: string | null
+  isDone: boolean
+}
+
+type EmptySkillCleanupStats = {
+  skillsScanned: number
+  skillsEvaluated: number
+  emptyDetected: number
+  skillsDeleted: number
+  nominationsCreated: number
+  missingLatestVersion: number
+  missingVersionDoc: number
+  missingReadme: number
+  missingStorageBlob: number
+  skippedLargeReadme: number
+}
+
+type EmptySkillCleanupNomination = {
+  userId: Id<'users'>
+  handle: string | null
+  emptySkillCount: number
+  sampleSlugs: string[]
+}
+
+export type EmptySkillCleanupActionArgs = {
+  dryRun?: boolean
+  batchSize?: number
+  maxBatches?: number
+  maxReadmeBytes?: number
+  nominationThreshold?: number
+}
+
+export type EmptySkillCleanupActionResult = {
+  ok: true
+  stats: EmptySkillCleanupStats
+  nominations: EmptySkillCleanupNomination[]
+}
+
+export const getEmptySkillCleanupPageInternal = internalQuery({
+  args: {
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<EmptySkillCleanupPageResult> => {
+    const batchSize = clampInt(args.batchSize ?? DEFAULT_BATCH_SIZE, 1, MAX_BATCH_SIZE)
+    const { page, isDone, continueCursor } = await ctx.db
+      .query('skills')
+      .order('asc')
+      .paginate({ cursor: args.cursor ?? null, numItems: batchSize })
+
+    return {
+      items: page.map((skill) => ({
+        skillId: skill._id,
+        slug: skill.slug,
+        ownerUserId: skill.ownerUserId,
+        latestVersionId: skill.latestVersionId,
+        softDeletedAt: skill.softDeletedAt,
+        summary: skill.summary,
+      })),
+      cursor: continueCursor,
+      isDone,
+    }
+  },
+})
+
+export const applyEmptySkillCleanupInternal = internalMutation({
+  args: {
+    skillId: v.id('skills'),
+    reason: v.string(),
+    quality: v.object({
+      score: v.number(),
+      trustTier: v.union(v.literal('low'), v.literal('medium'), v.literal('trusted')),
+      signals: v.object({
+        bodyChars: v.number(),
+        bodyWords: v.number(),
+        uniqueWordRatio: v.number(),
+        headingCount: v.number(),
+        bulletCount: v.number(),
+        templateMarkerHits: v.number(),
+        genericSummary: v.boolean(),
+      }),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const skill = await ctx.db.get(args.skillId)
+    if (!skill) return { deleted: false as const, reason: 'missing_skill' as const }
+    if (skill.softDeletedAt) return { deleted: false as const, reason: 'already_deleted' as const }
+
+    const now = Date.now()
+    await ctx.db.patch(skill._id, {
+      softDeletedAt: now,
+      moderationStatus: 'hidden',
+      moderationReason: 'quality.empty.backfill',
+      moderationNotes: args.reason,
+      quality: {
+        score: args.quality.score,
+        decision: 'reject',
+        trustTier: args.quality.trustTier,
+        similarRecentCount: 0,
+        reason: args.reason,
+        signals: args.quality.signals,
+        evaluatedAt: now,
+      },
+      updatedAt: now,
+    })
+
+    await ctx.db.insert('auditLogs', {
+      actorUserId: skill.ownerUserId,
+      action: 'skill.delete.empty.backfill',
+      targetType: 'skill',
+      targetId: skill._id,
+      metadata: {
+        slug: skill.slug,
+        score: args.quality.score,
+        trustTier: args.quality.trustTier,
+        signals: args.quality.signals,
+      },
+      createdAt: now,
+    })
+
+    return {
+      deleted: true as const,
+      ownerUserId: skill.ownerUserId,
+      slug: skill.slug,
+    }
+  },
+})
+
+export const nominateUserForEmptySkillSpamInternal = internalMutation({
+  args: {
+    userId: v.id('users'),
+    emptySkillCount: v.number(),
+    sampleSlugs: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('auditLogs')
+      .withIndex('by_target', (q) => q.eq('targetType', 'user').eq('targetId', args.userId))
+      .filter((q) => q.eq(q.field('action'), 'user.ban.nomination.empty-skill-spam'))
+      .first()
+    if (existing) return { created: false as const }
+
+    const now = Date.now()
+    await ctx.db.insert('auditLogs', {
+      actorUserId: args.userId,
+      action: 'user.ban.nomination.empty-skill-spam',
+      targetType: 'user',
+      targetId: args.userId,
+      metadata: {
+        emptySkillCount: args.emptySkillCount,
+        sampleSlugs: args.sampleSlugs.slice(0, 10),
+      },
+      createdAt: now,
+    })
+
+    return { created: true as const }
+  },
+})
+
+export async function cleanupEmptySkillsInternalHandler(
+  ctx: ActionCtx,
+  args: EmptySkillCleanupActionArgs,
+): Promise<EmptySkillCleanupActionResult> {
+  const dryRun = args.dryRun !== false
+  const batchSize = clampInt(args.batchSize ?? DEFAULT_BATCH_SIZE, 1, MAX_BATCH_SIZE)
+  const maxBatches = clampInt(args.maxBatches ?? DEFAULT_MAX_BATCHES, 1, MAX_MAX_BATCHES)
+  const maxReadmeBytes = clampInt(
+    args.maxReadmeBytes ?? DEFAULT_EMPTY_SKILL_MAX_README_BYTES,
+    256,
+    65536,
+  )
+  const nominationThreshold = clampInt(
+    args.nominationThreshold ?? DEFAULT_EMPTY_SKILL_NOMINATION_THRESHOLD,
+    1,
+    100,
+  )
+
+  const totals: EmptySkillCleanupStats = {
+    skillsScanned: 0,
+    skillsEvaluated: 0,
+    emptyDetected: 0,
+    skillsDeleted: 0,
+    nominationsCreated: 0,
+    missingLatestVersion: 0,
+    missingVersionDoc: 0,
+    missingReadme: 0,
+    missingStorageBlob: 0,
+    skippedLargeReadme: 0,
+  }
+
+  const ownerTrustCache = new Map<string, { trustTier: TrustTier; handle: string | null }>()
+  const emptyByOwner = new Map<string, EmptySkillCleanupNomination>()
+
+  let cursor: string | null = null
+  let isDone = false
+  const now = Date.now()
+
+  for (let i = 0; i < maxBatches; i++) {
+    const page = (await ctx.runQuery(internal.maintenance.getEmptySkillCleanupPageInternal, {
+      cursor: cursor ?? undefined,
+      batchSize,
+    })) as EmptySkillCleanupPageResult
+
+    cursor = page.cursor
+    isDone = page.isDone
+
+    for (const item of page.items) {
+      totals.skillsScanned++
+      if (item.softDeletedAt) continue
+
+      if (!item.latestVersionId) {
+        totals.missingLatestVersion++
+        continue
+      }
+
+      const version = (await ctx.runQuery(internal.skills.getVersionByIdInternal, {
+        versionId: item.latestVersionId,
+      })) as Doc<'skillVersions'> | null
+      if (!version) {
+        totals.missingVersionDoc++
+        continue
+      }
+
+      const readmeFile = version.files.find((file) => {
+        const lower = file.path.toLowerCase()
+        return lower === 'skill.md' || lower === 'skills.md'
+      })
+      if (!readmeFile) {
+        totals.missingReadme++
+        continue
+      }
+
+      if (readmeFile.size > maxReadmeBytes) {
+        totals.skippedLargeReadme++
+        continue
+      }
+
+      const blob = await ctx.storage.get(readmeFile.storageId)
+      if (!blob) {
+        totals.missingStorageBlob++
+        continue
+      }
+      const readmeText = await blob.text()
+      totals.skillsEvaluated++
+
+      const ownerKey = String(item.ownerUserId)
+      let ownerTrust = ownerTrustCache.get(ownerKey)
+      if (!ownerTrust) {
+        const owner = (await ctx.runQuery(internal.users.getByIdInternal, {
+          userId: item.ownerUserId,
+        })) as Doc<'users'> | null
+        const ownerActivity = (await ctx.runQuery(internal.skills.getOwnerSkillActivityInternal, {
+          ownerUserId: item.ownerUserId,
+          limit: 60,
+        })) as Array<{
+          slug: string
+          summary?: string
+          createdAt: number
+          latestVersionId?: Id<'skillVersions'>
+        }>
+
+        const ownerCreatedAt = owner?.createdAt ?? owner?._creationTime ?? now
+        ownerTrust = {
+          trustTier: getTrustTier(now - ownerCreatedAt, ownerActivity.length),
+          handle: owner?.handle ?? null,
+        }
+        ownerTrustCache.set(ownerKey, ownerTrust)
+      }
+
+      const qualitySignals = computeQualitySignals({
+        readmeText,
+        summary: item.summary ?? undefined,
+      })
+      const quality = evaluateQuality({
+        signals: qualitySignals,
+        trustTier: ownerTrust.trustTier,
+        similarRecentCount: 0,
+      })
+      if (quality.decision !== 'reject') continue
+
+      totals.emptyDetected++
+
+      const nomination = emptyByOwner.get(ownerKey) ?? {
+        userId: item.ownerUserId,
+        handle: ownerTrust.handle,
+        emptySkillCount: 0,
+        sampleSlugs: [],
+      }
+      nomination.emptySkillCount += 1
+      if (nomination.sampleSlugs.length < 10 && !nomination.sampleSlugs.includes(item.slug)) {
+        nomination.sampleSlugs.push(item.slug)
+      }
+      emptyByOwner.set(ownerKey, nomination)
+
+      if (dryRun) continue
+
+      const result = await ctx.runMutation(internal.maintenance.applyEmptySkillCleanupInternal, {
+        skillId: item.skillId,
+        reason: quality.reason,
+        quality: {
+          score: quality.score,
+          trustTier: quality.trustTier,
+          signals: quality.signals,
+        },
+      })
+      if (result.deleted) totals.skillsDeleted++
+    }
+
+    if (isDone) break
+  }
+
+  if (!isDone) {
+    throw new ConvexError('Cleanup incomplete (maxBatches reached)')
+  }
+
+  const nominations = Array.from(emptyByOwner.values())
+    .filter((entry) => entry.emptySkillCount >= nominationThreshold)
+    .sort((a, b) => b.emptySkillCount - a.emptySkillCount)
+
+  if (!dryRun) {
+    for (const nomination of nominations) {
+      const result = await ctx.runMutation(
+        internal.maintenance.nominateUserForEmptySkillSpamInternal,
+        {
+          userId: nomination.userId,
+          emptySkillCount: nomination.emptySkillCount,
+          sampleSlugs: nomination.sampleSlugs,
+        },
+      )
+      if (result.created) totals.nominationsCreated++
+    }
+  }
+
+  return { ok: true as const, stats: totals, nominations: nominations.slice(0, 200) }
+}
+
+export const cleanupEmptySkillsInternal = internalAction({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    batchSize: v.optional(v.number()),
+    maxBatches: v.optional(v.number()),
+    maxReadmeBytes: v.optional(v.number()),
+    nominationThreshold: v.optional(v.number()),
+  },
+  handler: cleanupEmptySkillsInternalHandler,
+})
+
+export const cleanupEmptySkills: ReturnType<typeof action> = action({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    batchSize: v.optional(v.number()),
+    maxBatches: v.optional(v.number()),
+    maxReadmeBytes: v.optional(v.number()),
+    nominationThreshold: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<EmptySkillCleanupActionResult> => {
+    const { user } = await requireUserFromAction(ctx)
+    assertRole(user, ['admin'])
+    return ctx.runAction(internal.maintenance.cleanupEmptySkillsInternal, args)
   },
 })
 
