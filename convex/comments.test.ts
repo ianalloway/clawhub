@@ -10,12 +10,13 @@ vi.mock('./skillStatEvents', () => ({
   insertStatEvent: vi.fn(),
 }))
 
-const { requireUser } = await import('./lib/access')
+const { requireUser, assertModerator } = await import('./lib/access')
 const { insertStatEvent } = await import('./skillStatEvents')
-const { __test } = await import('./comments')
+const { addHandler, removeHandler } = await import('./comments.handlers')
 
 describe('comments mutations', () => {
   afterEach(() => {
+    vi.mocked(assertModerator).mockReset()
     vi.mocked(requireUser).mockReset()
     vi.mocked(insertStatEvent).mockReset()
   })
@@ -33,7 +34,7 @@ describe('comments mutations', () => {
     const patch = vi.fn()
     const ctx = { db: { get, insert, patch } } as never
 
-    await __test.addHandler(ctx, { skillId: 'skills:1', body: ' hello ' } as never)
+    await addHandler(ctx, { skillId: 'skills:1', body: ' hello ' } as never)
 
     expect(patch).not.toHaveBeenCalled()
     expect(insertStatEvent).toHaveBeenCalledWith(ctx, {
@@ -62,7 +63,7 @@ describe('comments mutations', () => {
     const patch = vi.fn()
     const ctx = { db: { get, insert, patch } } as never
 
-    await __test.removeHandler(ctx, { commentId: 'comments:1' } as never)
+    await removeHandler(ctx, { commentId: 'comments:1' } as never)
 
     expect(patch).toHaveBeenCalledTimes(1)
     const deletePatch = vi.mocked(patch).mock.calls[0]?.[1] as Record<string, unknown>
@@ -71,5 +72,56 @@ describe('comments mutations', () => {
       skillId: 'skills:1',
       kind: 'uncomment',
     })
+  })
+
+  it('remove rejects non-owner without moderator permission', async () => {
+    vi.mocked(requireUser).mockResolvedValue({
+      userId: 'users:3',
+      user: { _id: 'users:3', role: 'user' },
+    } as never)
+    vi.mocked(assertModerator).mockImplementation(() => {
+      throw new Error('Moderator role required')
+    })
+
+    const comment = {
+      _id: 'comments:2',
+      skillId: 'skills:2',
+      userId: 'users:9',
+      softDeletedAt: undefined,
+    }
+    const get = vi.fn().mockResolvedValue(comment)
+    const insert = vi.fn()
+    const patch = vi.fn()
+    const ctx = { db: { get, insert, patch } } as never
+
+    await expect(removeHandler(ctx, { commentId: 'comments:2' } as never)).rejects.toThrow(
+      'Moderator role required',
+    )
+    expect(patch).not.toHaveBeenCalled()
+    expect(insertStatEvent).not.toHaveBeenCalled()
+  })
+
+  it('remove no-ops for soft-deleted comment', async () => {
+    vi.mocked(requireUser).mockResolvedValue({
+      userId: 'users:4',
+      user: { _id: 'users:4', role: 'moderator' },
+    } as never)
+
+    const comment = {
+      _id: 'comments:3',
+      skillId: 'skills:3',
+      userId: 'users:4',
+      softDeletedAt: 123,
+    }
+    const get = vi.fn().mockResolvedValue(comment)
+    const insert = vi.fn()
+    const patch = vi.fn()
+    const ctx = { db: { get, insert, patch } } as never
+
+    await removeHandler(ctx, { commentId: 'comments:3' } as never)
+
+    expect(patch).not.toHaveBeenCalled()
+    expect(insert).not.toHaveBeenCalled()
+    expect(insertStatEvent).not.toHaveBeenCalled()
   })
 })

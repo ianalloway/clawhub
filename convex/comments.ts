@@ -1,63 +1,8 @@
 import { v } from 'convex/values'
-import type { Doc, Id } from './_generated/dataModel'
+import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { assertModerator, requireUser } from './lib/access'
+import { addHandler, removeHandler } from './comments.handlers'
 import { type PublicUser, toPublicUser } from './lib/public'
-import { insertStatEvent } from './skillStatEvents'
-
-async function addHandler(
-  ctx: import('./_generated/server').MutationCtx,
-  args: { skillId: Id<'skills'>; body: string },
-) {
-  const { userId } = await requireUser(ctx)
-  const body = args.body.trim()
-  if (!body) throw new Error('Comment body required')
-
-  const skill = await ctx.db.get(args.skillId)
-  if (!skill) throw new Error('Skill not found')
-
-  await ctx.db.insert('comments', {
-    skillId: args.skillId,
-    userId,
-    body,
-    createdAt: Date.now(),
-    softDeletedAt: undefined,
-    deletedBy: undefined,
-  })
-
-  await insertStatEvent(ctx, { skillId: skill._id, kind: 'comment' })
-}
-
-async function removeHandler(
-  ctx: import('./_generated/server').MutationCtx,
-  args: { commentId: Id<'comments'> },
-) {
-  const { user } = await requireUser(ctx)
-  const comment = await ctx.db.get(args.commentId)
-  if (!comment) throw new Error('Comment not found')
-  if (comment.softDeletedAt) return
-
-  const isOwner = comment.userId === user._id
-  if (!isOwner) {
-    assertModerator(user)
-  }
-
-  await ctx.db.patch(comment._id, {
-    softDeletedAt: Date.now(),
-    deletedBy: user._id,
-  })
-
-  await insertStatEvent(ctx, { skillId: comment.skillId, kind: 'uncomment' })
-
-  await ctx.db.insert('auditLogs', {
-    actorUserId: user._id,
-    action: 'comment.delete',
-    targetType: 'comment',
-    targetId: comment._id,
-    metadata: { skillId: comment.skillId },
-    createdAt: Date.now(),
-  })
-}
 
 export const listBySkill = query({
   args: { skillId: v.id('skills'), limit: v.optional(v.number()) },
@@ -69,13 +14,15 @@ export const listBySkill = query({
       .order('desc')
       .take(limit)
 
-    const results: Array<{ comment: Doc<'comments'>; user: PublicUser | null }> = []
-    for (const comment of comments) {
-      if (comment.softDeletedAt) continue
-      const user = toPublicUser(await ctx.db.get(comment.userId))
-      results.push({ comment, user })
-    }
-    return results
+    const visible = comments.filter((comment) => !comment.softDeletedAt)
+    return Promise.all(
+      visible.map(
+        async (comment): Promise<{ comment: Doc<'comments'>; user: PublicUser | null }> => ({
+          comment,
+          user: toPublicUser(await ctx.db.get(comment.userId)),
+        }),
+      ),
+    )
   },
 })
 
@@ -88,8 +35,3 @@ export const remove = mutation({
   args: { commentId: v.id('comments') },
   handler: removeHandler,
 })
-
-export const __test = {
-  addHandler,
-  removeHandler,
-}
