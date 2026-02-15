@@ -5,9 +5,16 @@ type UserBadgeProps = {
   fallbackHandle?: string | null
   prefix?: string
   size?: 'sm' | 'md'
+  link?: boolean
 }
 
-export function UserBadge({ user, fallbackHandle, prefix = 'by', size = 'sm' }: UserBadgeProps) {
+export function UserBadge({
+  user,
+  fallbackHandle,
+  prefix = 'by',
+  size = 'sm',
+  link = true,
+}: UserBadgeProps) {
   const handle = user?.handle ?? user?.name ?? fallbackHandle ?? null
   const href = user?.handle ? `/u/${encodeURIComponent(user.handle)}` : null
   const label = handle ? `@${handle}` : 'user'
@@ -24,7 +31,7 @@ export function UserBadge({ user, fallbackHandle, prefix = 'by', size = 'sm' }: 
           <span className="user-avatar-fallback">{initial}</span>
         )}
       </span>
-      {href ? (
+      {link && href ? (
         <a className="user-handle" href={href}>
           {label}
         </a>
@@ -34,4 +41,3 @@ export function UserBadge({ user, fallbackHandle, prefix = 'by', size = 'sm' }: 
     </span>
   )
 }
-

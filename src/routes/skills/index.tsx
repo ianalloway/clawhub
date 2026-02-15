@@ -470,7 +470,7 @@ export function SkillsIndex() {
                   summaryFallback="Agent-ready skill pack."
                   meta={
                     <div className="skill-card-footer-inline">
-                      <UserBadge user={entry.owner} fallbackHandle={ownerHandle} prefix="by" />
+                      <UserBadge user={entry.owner} fallbackHandle={ownerHandle} prefix="by" link={false} />
                       <div className="stat">
                         ⭐ {skill.stats.stars} · ⤓ {skill.stats.downloads} · ⤒{' '}
                         {skill.stats.installsAllTime ?? 0}
@@ -507,7 +507,7 @@ export function SkillsIndex() {
                       {skill.summary ?? 'No summary provided.'}
                     </div>
                     <div className="skills-row-owner">
-                      <UserBadge user={entry.owner} fallbackHandle={ownerHandle} prefix="by" />
+                      <UserBadge user={entry.owner} fallbackHandle={ownerHandle} prefix="by" link={false} />
                     </div>
                     {isPlugin ? (
                       <div className="skills-row-meta">
