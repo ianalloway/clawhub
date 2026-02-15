@@ -648,7 +648,13 @@ export function SkillDetailPage({
                   all-time
                 </div>
                 <div className="stat">
-                  <UserBadge user={owner} fallbackHandle={ownerHandle} prefix="by" size="md" />
+                  <UserBadge
+                    user={owner}
+                    fallbackHandle={ownerHandle}
+                    prefix="by"
+                    size="md"
+                    showName
+                  />
                 </div>
                 {forkOf && forkOfHref ? (
                   <div className="stat">

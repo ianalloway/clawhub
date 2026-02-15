@@ -92,7 +92,7 @@ function SkillsHome() {
                 badge={getSkillBadges(entry.skill)}
                 summaryFallback="A fresh skill bundle."
                 meta={
-                  <div className="skill-card-footer-inline">
+                  <div className="skill-card-footer-rows">
                     <UserBadge
                       user={entry.owner}
                       fallbackHandle={entry.ownerHandle ?? null}
@@ -124,7 +124,7 @@ function SkillsHome() {
                 skill={entry.skill}
                 summaryFallback="Agent-ready skill pack."
                 meta={
-                  <div className="skill-card-footer-inline">
+                  <div className="skill-card-footer-rows">
                     <UserBadge
                       user={entry.owner}
                       fallbackHandle={entry.ownerHandle ?? null}

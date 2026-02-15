@@ -469,7 +469,7 @@ export function SkillsIndex() {
                   chip={isPlugin ? 'Plugin bundle (nix)' : undefined}
                   summaryFallback="Agent-ready skill pack."
                   meta={
-                    <div className="skill-card-footer-inline">
+                    <div className="skill-card-footer-rows">
                       <UserBadge user={entry.owner} fallbackHandle={ownerHandle} prefix="by" link={false} />
                       <div className="stat">
                         ⭐ {skill.stats.stars} · ⤓ {skill.stats.downloads} · ⤒{' '}
