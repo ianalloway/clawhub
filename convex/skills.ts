@@ -1569,8 +1569,7 @@ export const listPublicPageV2 = query({
   handler: async (ctx, args) => {
     const sort = args.sort ?? 'newest'
     const dir = args.dir ?? (sort === 'name' ? 'asc' : 'desc')
-    const numItems = clampInt(args.paginationOpts.numItems, 1, MAX_PUBLIC_LIST_LIMIT)
-    const initialCursor = args.paginationOpts.cursor ?? null
+    const { numItems, cursor: initialCursor } = normalizePublicListPagination(args.paginationOpts)
 
     const runPaginate = (cursor: string | null) =>
       ctx.db
@@ -1579,19 +1578,9 @@ export const listPublicPageV2 = query({
         .order(dir)
         .paginate({ cursor, numItems })
 
-    let result: Awaited<ReturnType<typeof runPaginate>>
-    try {
-      // Use the index to filter out soft-deleted skills at query time.
-      // softDeletedAt === undefined means active (non-deleted) skills only.
-      result = await runPaginate(initialCursor)
-    } catch (error) {
-      // Some clients may send stale cursors after index/query argument changes.
-      // Recover by restarting from the first page instead of surfacing a 500.
-      if (!initialCursor || !isCursorParseError(error)) {
-        throw error
-      }
-      result = await runPaginate(null)
-    }
+    // Use the index to filter out soft-deleted skills at query time.
+    // softDeletedAt === undefined means active (non-deleted) skills only.
+    const result = await paginateWithStaleCursorRecovery(runPaginate, initialCursor)
 
     const filteredPage =
       args.nonSuspiciousOnly || args.highlightedOnly
@@ -1607,6 +1596,32 @@ export const listPublicPageV2 = query({
     return { ...result, page: items }
   },
 })
+
+function normalizePublicListPagination(paginationOpts: {
+  cursor?: string | null
+  numItems: number
+}) {
+  return {
+    cursor: paginationOpts.cursor ?? null,
+    numItems: clampInt(paginationOpts.numItems, 1, MAX_PUBLIC_LIST_LIMIT),
+  }
+}
+
+async function paginateWithStaleCursorRecovery<T>(
+  runPaginate: (cursor: string | null) => Promise<T>,
+  initialCursor: string | null,
+) {
+  try {
+    return await runPaginate(initialCursor)
+  } catch (error) {
+    // Some clients may send stale cursors after index/query argument changes.
+    // Recover by restarting from the first page instead of surfacing a 500.
+    if (!initialCursor || !isCursorParseError(error)) {
+      throw error
+    }
+    return runPaginate(null)
+  }
+}
 
 function isCursorParseError(error: unknown) {
   if (typeof error === 'string') return error.includes('Failed to parse cursor')

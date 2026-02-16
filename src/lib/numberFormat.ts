@@ -10,20 +10,27 @@ export type SoulStatsTriplet = {
   versions: number
 }
 
+const THOUSAND = 1_000
+const MILLION = 1_000_000
+
 export function formatCompactStat(value: number): string {
   if (!Number.isFinite(value)) return '0'
   const sign = value < 0 ? '-' : ''
   const absolute = Math.abs(value)
 
-  if (absolute < 1_000) {
+  if (absolute < THOUSAND) {
     return `${Math.round(value)}`
   }
 
-  if (absolute < 1_000_000) {
-    return `${sign}${formatUnit(absolute / 1_000)}k`
+  if (absolute < MILLION) {
+    const { formatted, rounded } = formatUnit(absolute / THOUSAND)
+    if (rounded >= THOUSAND) {
+      return `${sign}1M`
+    }
+    return `${sign}${formatted}k`
   }
 
-  return `${sign}${formatUnit(absolute / 1_000_000)}M`
+  return `${sign}${formatUnit(absolute / MILLION).formatted}M`
 }
 
 export function formatSkillStatsTriplet(stats: SkillStatsTriplet) {
@@ -42,11 +49,14 @@ export function formatSoulStatsTriplet(stats: SoulStatsTriplet) {
   }
 }
 
-function formatUnit(scaled: number): string {
+function formatUnit(scaled: number): { formatted: string; rounded: number } {
   const decimals = scaled < 100 ? 1 : 0
   const factor = 10 ** decimals
   const rounded = Math.round(scaled * factor) / factor
-  return stripTrailingZero(rounded.toFixed(decimals))
+  return {
+    formatted: stripTrailingZero(rounded.toFixed(decimals)),
+    rounded,
+  }
 }
 
 function stripTrailingZero(value: string): string {

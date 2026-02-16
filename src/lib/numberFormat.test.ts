@@ -26,6 +26,11 @@ describe('formatCompactStat', () => {
     expect(formatCompactStat(23_683_000)).toBe('23.7M')
   })
 
+  it('carries rounded thousands into millions', () => {
+    expect(formatCompactStat(999_949)).toBe('1M')
+    expect(formatCompactStat(-999_949)).toBe('-1M')
+  })
+
   it('preserves sign for negative values', () => {
     expect(formatCompactStat(-1_500)).toBe('-1.5k')
     expect(formatCompactStat(-2_500_000)).toBe('-2.5M')
