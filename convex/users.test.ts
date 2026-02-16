@@ -133,6 +133,55 @@ describe('ensureHandler', () => {
     expect(get).toHaveBeenCalledWith('users:4')
     expect(result).toMatchObject({ _id: 'users:4' })
   })
+
+  it('sets admin role when normalized handle is steipete and role is missing', async () => {
+    const { ctx, patch } = makeCtx()
+    vi.mocked(requireUser).mockResolvedValue({
+      userId: 'users:admin',
+      user: {
+        _creationTime: 1,
+        handle: 'steipete',
+        displayName: 'steipete',
+        name: 'steipete',
+        role: undefined,
+        createdAt: 1,
+      },
+    } as never)
+
+    await ensureHandler(ctx)
+
+    expect(patch).toHaveBeenCalledWith('users:admin', {
+      displayName: 'steipete',
+      role: 'admin',
+      updatedAt: expect.any(Number),
+    })
+  })
+
+  it('derives handle/display name from email when missing', async () => {
+    const { ctx, patch } = makeCtx()
+    vi.mocked(requireUser).mockResolvedValue({
+      userId: 'users:email',
+      user: {
+        _creationTime: 1,
+        handle: undefined,
+        displayName: undefined,
+        name: undefined,
+        email: 'owner@example.com',
+        role: undefined,
+        createdAt: undefined,
+      },
+    } as never)
+
+    await ensureHandler(ctx)
+
+    expect(patch).toHaveBeenCalledWith('users:email', {
+      handle: 'owner',
+      displayName: 'owner',
+      role: 'user',
+      createdAt: 1,
+      updatedAt: expect.any(Number),
+    })
+  })
 })
 
 describe('users.list', () => {
@@ -287,6 +336,18 @@ describe('users.list', () => {
     expect(take).toHaveBeenCalledWith(1)
     expect(result.total).toBe(1)
     expect(result.items).toHaveLength(1)
+  })
+
+  it('rejects non-admin actors', async () => {
+    vi.mocked(requireUser).mockResolvedValue({
+      userId: 'users:basic',
+      user: { _id: 'users:basic', role: 'user' },
+    } as never)
+    const { ctx } = makeListCtx([])
+    const listHandler = (list as unknown as { _handler: (ctx: unknown, args: unknown) => Promise<unknown> })
+      ._handler
+
+    await expect(listHandler(ctx, { limit: 10 })).rejects.toThrow('Forbidden')
   })
 })
 
