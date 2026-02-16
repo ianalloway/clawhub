@@ -184,6 +184,75 @@ describe('skills.listPublicPageV2', () => {
       }),
     )
   })
+
+  it('drops pagination id from client options on first-page queries', async () => {
+    const plain = makeSkill('skills:plain', 'plain', 'users:1', 'skillVersions:1')
+    const paginateMock = vi.fn().mockResolvedValue({
+      page: [plain],
+      continueCursor: 'next-cursor',
+      isDone: false,
+      pageStatus: null,
+      splitCursor: null,
+    })
+    const ctx = {
+      db: {
+        query: vi.fn(() => ({
+          withIndex: vi.fn(() => ({
+            order: vi.fn(() => ({ paginate: paginateMock })),
+          })),
+        })),
+        get: vi.fn(async (id: string) => {
+          if (id.startsWith('users:')) return makeUser(id)
+          if (id.startsWith('skillVersions:')) return makeVersion(id)
+          return null
+        }),
+      },
+    }
+
+    const result = await listPublicPageV2Handler(ctx, {
+      paginationOpts: { cursor: null, numItems: 25, id: 999_999_999 },
+      sort: 'downloads',
+      dir: 'desc',
+      highlightedOnly: false,
+      nonSuspiciousOnly: false,
+    })
+
+    expect(result.page).toHaveLength(1)
+    expect(paginateMock).toHaveBeenCalledTimes(1)
+    expect(paginateMock).toHaveBeenCalledWith({ cursor: null, numItems: 25 })
+    expect(paginateMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: expect.any(Number),
+      }),
+    )
+  })
+
+  it('does not swallow non-cursor paginate errors', async () => {
+    const paginateMock = vi.fn().mockRejectedValue(new Error('database unavailable'))
+    const ctx = {
+      db: {
+        query: vi.fn(() => ({
+          withIndex: vi.fn(() => ({
+            order: vi.fn(() => ({ paginate: paginateMock })),
+          })),
+        })),
+        get: vi.fn(),
+      },
+    }
+
+    await expect(
+      listPublicPageV2Handler(ctx, {
+        paginationOpts: { cursor: 'stale-cursor', numItems: 25, id: 999_999_999 },
+        sort: 'downloads',
+        dir: 'desc',
+        highlightedOnly: false,
+        nonSuspiciousOnly: false,
+      }),
+    ).rejects.toThrow('database unavailable')
+
+    expect(paginateMock).toHaveBeenCalledTimes(1)
+    expect(paginateMock).toHaveBeenCalledWith({ cursor: 'stale-cursor', numItems: 25 })
+  })
 })
 
 function makeSkill(
