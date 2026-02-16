@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type { ClawdisSkillMetadata } from 'clawhub-schema'
 import type { Doc, Id } from '../../convex/_generated/dataModel'
 import { getSkillBadges } from '../lib/badges'
+import { formatCompactStat } from '../lib/numberFormat'
 import type { PublicSkill, PublicUser } from '../lib/publicUser'
 import { type LlmAnalysis, SecurityScanResults } from './SkillSecurityScanResults'
 import { SkillInstallCard } from './SkillInstallCard'
@@ -185,8 +186,9 @@ export function SkillHeader({
                 </div>
               ) : null}
               <div className="stat">
-                ⭐ {skill.stats.stars} · ⤓ {skill.stats.downloads} · ⤒ {skill.stats.installsCurrent ?? 0}{' '}
-                current · {skill.stats.installsAllTime ?? 0} all-time
+                ⭐ {formatCompactStat(skill.stats.stars)} · ⤓ {formatCompactStat(skill.stats.downloads)}
+                {' · '}⤒ {formatCompactStat(skill.stats.installsCurrent ?? 0)} current ·{' '}
+                {formatCompactStat(skill.stats.installsAllTime ?? 0)} all-time
               </div>
               <div className="stat">
                 <UserBadge user={owner} fallbackHandle={ownerHandle} prefix="by" size="md" showName />

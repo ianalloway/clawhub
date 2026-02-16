@@ -3,6 +3,7 @@ import { useQuery } from 'convex/react'
 import { Clock, Package, Plus, Upload } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Doc } from '../../convex/_generated/dataModel'
+import { formatCompactStat } from '../lib/numberFormat'
 import type { PublicSkill } from '../lib/publicUser'
 
 type DashboardSkill = PublicSkill & { pendingReview?: boolean }
@@ -84,8 +85,8 @@ function SkillCard({ skill, ownerHandle }: { skill: DashboardSkill; ownerHandle:
         </div>
         {skill.summary && <p className="dashboard-skill-description">{skill.summary}</p>}
         <div className="dashboard-skill-stats">
-          <span>⤓ {skill.stats.downloads}</span>
-          <span>★ {skill.stats.stars}</span>
+          <span>⤓ {formatCompactStat(skill.stats.downloads)}</span>
+          <span>★ {formatCompactStat(skill.stats.stars)}</span>
           <span>{skill.stats.versions} v</span>
         </div>
       </div>

@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '../../convex/_generated/api'
 import type { Doc } from '../../convex/_generated/dataModel'
+import { formatCompactStat } from '../lib/numberFormat'
 import type { PublicSoul, PublicUser } from '../lib/publicUser'
 import { isModerator } from '../lib/roles'
 import { useAuthStatus } from '../lib/useAuthStatus'
@@ -114,7 +115,8 @@ export function SoulDetailPage({ slug }: SoulDetailPageProps) {
               </h1>
               <p className="section-subtitle">{soul.summary ?? 'No summary provided.'}</p>
               <div className="stat">
-                ⭐ {soul.stats.stars} · ⤓ {soul.stats.downloads} · {soul.stats.versions} versions
+                ⭐ {formatCompactStat(soul.stats.stars)} · ⤓{' '}
+                {formatCompactStat(soul.stats.downloads)} · {soul.stats.versions} versions
               </div>
               {ownerHandle ? (
                 <div className="stat">

@@ -3,6 +3,7 @@ import { useAction, useQuery } from 'convex/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { SoulCard } from '../../components/SoulCard'
+import { formatCompactStat } from '../../lib/numberFormat'
 import type { PublicSoul } from '../../lib/publicUser'
 
 const sortKeys = ['newest', 'downloads', 'stars', 'name', 'updated'] as const
@@ -207,7 +208,8 @@ function SoulsIndex() {
               summaryFallback="A SOUL.md bundle."
               meta={
                 <div className="stat">
-                  ⭐ {soul.stats.stars} · ⤓ {soul.stats.downloads} · {soul.stats.versions} v
+                  ⭐ {formatCompactStat(soul.stats.stars)} · ⤓{' '}
+                  {formatCompactStat(soul.stats.downloads)} · {soul.stats.versions} v
                 </div>
               }
             />
@@ -221,20 +223,20 @@ function SoulsIndex() {
               className="skills-row"
               to="/souls/$slug"
               params={{ slug: soul.slug }}
-            >
-              <div className="skills-row-main">
+              >
+                <div className="skills-row-main">
                 <div className="skills-row-title">
                   <span>{soul.displayName}</span>
                   <span className="skills-row-slug">/{soul.slug}</span>
                 </div>
                 <div className="skills-row-summary">{soul.summary ?? 'SOUL.md bundle.'}</div>
-              </div>
-              <div className="skills-row-metrics">
-                <span>⤓ {soul.stats.downloads}</span>
-                <span>★ {soul.stats.stars}</span>
-                <span>{soul.stats.versions} v</span>
-              </div>
-            </Link>
+                </div>
+                <div className="skills-row-metrics">
+                  <span>⤓ {formatCompactStat(soul.stats.downloads)}</span>
+                  <span>★ {formatCompactStat(soul.stats.stars)}</span>
+                  <span>{soul.stats.versions} v</span>
+                </div>
+              </Link>
           ))}
         </div>
       )}

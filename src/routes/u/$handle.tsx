@@ -5,6 +5,7 @@ import { api } from '../../../convex/_generated/api'
 import type { Doc } from '../../../convex/_generated/dataModel'
 import { SkillCard } from '../../components/SkillCard'
 import { getSkillBadges } from '../../lib/badges'
+import { formatCompactStat } from '../../lib/numberFormat'
 import type { PublicSkill, PublicUser } from '../../lib/publicUser'
 
 export const Route = createFileRoute('/u/$handle')({
@@ -125,8 +126,9 @@ function UserProfile() {
                   summaryFallback="Agent-ready skill pack."
                   meta={
                     <div className="stat">
-                      ⭐ {skill.stats.stars} · ⤓ {skill.stats.downloads} · ⤒{' '}
-                      {skill.stats.installsAllTime ?? 0}
+                      ⭐ {formatCompactStat(skill.stats.stars)} · ⤓{' '}
+                      {formatCompactStat(skill.stats.downloads)} · ⤒{' '}
+                      {formatCompactStat(skill.stats.installsAllTime ?? 0)}
                     </div>
                   }
                 />
@@ -155,8 +157,9 @@ function UserProfile() {
                   summaryFallback="Agent-ready skill pack."
                   meta={
                     <div className="stat">
-                      ⭐ {skill.stats.stars} · ⤓ {skill.stats.downloads} · ⤒{' '}
-                      {skill.stats.installsAllTime ?? 0}
+                      ⭐ {formatCompactStat(skill.stats.stars)} · ⤓{' '}
+                      {formatCompactStat(skill.stats.downloads)} · ⤒{' '}
+                      {formatCompactStat(skill.stats.installsAllTime ?? 0)}
                     </div>
                   }
                 />

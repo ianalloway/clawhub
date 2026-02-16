@@ -7,6 +7,7 @@ import { SkillCard } from '../components/SkillCard'
 import { SoulCard } from '../components/SoulCard'
 import { UserBadge } from '../components/UserBadge'
 import { getSkillBadges } from '../lib/badges'
+import { formatCompactStat } from '../lib/numberFormat'
 import type { PublicSkill, PublicSoul, PublicUser } from '../lib/publicUser'
 import { getSiteMode } from '../lib/site'
 
@@ -100,8 +101,9 @@ function SkillsHome() {
                       link={false}
                     />
                     <div className="stat">
-                      ⭐ {entry.skill.stats.stars} · ⤓ {entry.skill.stats.downloads} · ⤒{' '}
-                      {entry.skill.stats.installsAllTime ?? 0}
+                      ⭐ {formatCompactStat(entry.skill.stats.stars)} · ⤓{' '}
+                      {formatCompactStat(entry.skill.stats.downloads)} · ⤒{' '}
+                      {formatCompactStat(entry.skill.stats.installsAllTime ?? 0)}
                     </div>
                   </div>
                 }
@@ -132,8 +134,9 @@ function SkillsHome() {
                       link={false}
                     />
                     <div className="stat">
-                      ⭐ {entry.skill.stats.stars} · ⤓ {entry.skill.stats.downloads} · ⤒{' '}
-                      {entry.skill.stats.installsAllTime ?? 0}
+                      ⭐ {formatCompactStat(entry.skill.stats.stars)} · ⤓{' '}
+                      {formatCompactStat(entry.skill.stats.downloads)} · ⤒{' '}
+                      {formatCompactStat(entry.skill.stats.installsAllTime ?? 0)}
                     </div>
                   </div>
                 }
@@ -253,7 +256,8 @@ function OnlyCrabsHome() {
                 summaryFallback="A SOUL.md bundle."
                 meta={
                   <div className="stat">
-                    ⭐ {soul.stats.stars} · ⤓ {soul.stats.downloads} · {soul.stats.versions} v
+                    ⭐ {formatCompactStat(soul.stats.stars)} · ⤓{' '}
+                    {formatCompactStat(soul.stats.downloads)} · {soul.stats.versions} v
                   </div>
                 }
               />

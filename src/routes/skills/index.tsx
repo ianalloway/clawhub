@@ -6,6 +6,7 @@ import type { Doc } from '../../../convex/_generated/dataModel'
 import { SkillCard } from '../../components/SkillCard'
 import { UserBadge } from '../../components/UserBadge'
 import { getSkillBadges } from '../../lib/badges'
+import { formatCompactStat } from '../../lib/numberFormat'
 import type { PublicSkill, PublicUser } from '../../lib/publicUser'
 
 const sortKeys = [
@@ -471,8 +472,9 @@ export function SkillsIndex() {
                     <div className="skill-card-footer-rows">
                       <UserBadge user={entry.owner} fallbackHandle={ownerHandle} prefix="by" link={false} />
                       <div className="stat">
-                        ⭐ {skill.stats.stars} · ⤓ {skill.stats.downloads} · ⤒{' '}
-                        {skill.stats.installsAllTime ?? 0}
+                        ⭐ {formatCompactStat(skill.stats.stars)} · ⤓{' '}
+                        {formatCompactStat(skill.stats.downloads)} · ⤒{' '}
+                        {formatCompactStat(skill.stats.installsAllTime ?? 0)}
                       </div>
                     </div>
                   }
@@ -515,9 +517,9 @@ export function SkillsIndex() {
                     ) : null}
                   </div>
                   <div className="skills-row-metrics">
-                    <span>⤓ {skill.stats.downloads}</span>
-                    <span>⤒ {skill.stats.installsAllTime ?? 0}</span>
-                    <span>★ {skill.stats.stars}</span>
+                    <span>⤓ {formatCompactStat(skill.stats.downloads)}</span>
+                    <span>⤒ {formatCompactStat(skill.stats.installsAllTime ?? 0)}</span>
+                    <span>★ {formatCompactStat(skill.stats.stars)}</span>
                     <span>{skill.stats.versions} v</span>
                   </div>
                 </Link>
