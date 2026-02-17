@@ -55,6 +55,18 @@ We still ship some bundled skills for baseline UX.
 New skills should be published to ClawHub first (`clawhub.ai`), not added to core by default.
 Core skill additions should be rare and require a strong product or security reason.
 
+### MCP Support
+
+OpenClaw supports MCP through `mcporter`: https://github.com/steipete/mcporter
+
+This keeps MCP integration flexible and decoupled from core runtime:
+- add or change MCP servers without restarting the gateway
+- keep core tool/context surface lean
+- reduce MCP churn impact on core stability and security
+
+For now, we prefer this bridge model over building first-class MCP runtime into core.
+If there is an MCP server or feature `mcporter` does not support yet, please open an issue there.
+
 ### Setup
 
 OpenClaw is currently terminal-first by design.
