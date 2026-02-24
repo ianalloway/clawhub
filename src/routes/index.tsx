@@ -6,6 +6,7 @@ import { InstallSwitcher } from '../components/InstallSwitcher'
 import { SkillCard } from '../components/SkillCard'
 import { SoulCard } from '../components/SoulCard'
 import { UserBadge } from '../components/UserBadge'
+import { FeaturedCollections } from '../components/FeaturedCollections'
 import { getSkillBadges } from '../lib/badges'
 import type { PublicSkill, PublicSoul, PublicUser } from '../lib/publicUser'
 import { getSiteMode } from '../lib/site'
@@ -77,6 +78,8 @@ function SkillsHome() {
           </div>
         </div>
       </section>
+
+      <FeaturedCollections />
 
       <section className="section">
         <h2 className="section-title">Highlighted skills</h2>
