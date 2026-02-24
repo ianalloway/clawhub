@@ -743,6 +743,38 @@ describe('httpApiV1 handlers', () => {
     expect(response.headers.get('X-Content-SHA256')).toBe('abcd')
   })
 
+  it('returns 404 when tag param is a prototype property name', async () => {
+    const version = {
+      version: '1.0.0',
+      createdAt: 1,
+      changelog: 'c',
+      files: [{ path: 'SKILL.md', size: 5, storageId: 'storage:1', sha256: 'abcd', contentType: 'text/plain' }],
+      softDeletedAt: undefined,
+    }
+    const runQuery = vi.fn().mockResolvedValue({
+      skill: {
+        _id: 'skills:1',
+        slug: 'demo',
+        displayName: 'Demo',
+        summary: 's',
+        tags: {},
+        stats: {},
+        createdAt: 1,
+        updatedAt: 2,
+      },
+      latestVersion: version,
+      owner: null,
+    })
+    const runMutation = vi.fn().mockResolvedValue(okRate())
+    for (const dangerousTag of ['__proto__', 'constructor', 'toString']) {
+      const response = await __handlers.skillsGetRouterV1Handler(
+        makeCtx({ runQuery, runMutation }),
+        new Request(`https://example.com/api/v1/skills/demo/file?path=SKILL.md&tag=${dangerousTag}`),
+      )
+      expect(response.status).toBe(404)
+    }
+  })
+
   it('returns 413 when raw file too large', async () => {
     const version = {
       version: '1.0.0',
