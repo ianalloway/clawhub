@@ -229,7 +229,8 @@ export async function soulsGetRouterV1Handler(ctx: ActionCtx, request: Request) 
         version: versionParam,
       })
     } else if (tagParam) {
-      const versionId = soulResult.soul.tags[tagParam]
+      const tags = soulResult.soul.tags
+      const versionId = Object.hasOwn(tags, tagParam) ? tags[tagParam] : undefined
       if (versionId) {
         version = await ctx.runQuery(api.souls.getVersionById, { versionId })
       }

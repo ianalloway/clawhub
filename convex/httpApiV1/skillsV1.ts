@@ -386,7 +386,8 @@ export async function skillsGetRouterV1Handler(ctx: ActionCtx, request: Request)
         version: versionParam,
       })
     } else if (tagParam) {
-      const versionId = skillResult.skill.tags[tagParam]
+      const tags = skillResult.skill.tags
+      const versionId = Object.hasOwn(tags, tagParam) ? tags[tagParam] : undefined
       if (versionId) {
         version = await ctx.runQuery(api.skills.getVersionById, { versionId })
       }

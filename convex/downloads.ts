@@ -79,7 +79,7 @@ export const downloadZip = httpAction(async (ctx, request) => {
       version: versionParam,
     })
   } else if (tagParam) {
-    const versionId = skill.tags[tagParam]
+    const versionId = Object.hasOwn(skill.tags, tagParam) ? skill.tags[tagParam] : undefined
     if (versionId) {
       version = await ctx.runQuery(api.skills.getVersionById, { versionId })
     }
