@@ -76,6 +76,29 @@ describe('skill stat events - comment delta handling', () => {
     expect(result.downloadEvents).toEqual([5000])
   })
 
+  it('counts first comment on skill whose stats.comments is undefined (legacy record)', () => {
+    // Older skill documents may not have stats.comments set yet.
+    // applySkillStatDeltas must treat undefined as 0 so the first comment
+    // is not silently discarded (undefined + 1 == NaN; Math.max(0, NaN) == 0).
+    const { applySkillStatDeltas } = require('./lib/skillStats') as typeof import('./lib/skillStats')
+    const legacySkill = {
+      statsDownloads: 0,
+      statsStars: 0,
+      statsInstallsCurrent: 0,
+      statsInstallsAllTime: 0,
+      stats: {
+        downloads: 0,
+        stars: 0,
+        installsCurrent: 0,
+        installsAllTime: 0,
+        versions: 1,
+        // comments intentionally absent
+      },
+    }
+    const patch = applySkillStatDeltas(legacySkill as never, { comments: 1 })
+    expect(patch.stats.comments).toBe(1)
+  })
+
   it('should include comments in delta check (regression test for dropped comments)', () => {
     // This test verifies the fix: the condition guard in applyAggregatedStatsAndUpdateCursor
     // must include comments !== 0 so comment-only batches are not skipped

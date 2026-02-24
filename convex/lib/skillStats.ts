@@ -23,7 +23,7 @@ export function applySkillStatDeltas(skill: Doc<'skills'>, deltas: SkillStatDelt
       ? skill.statsInstallsAllTime
       : (skill.stats.installsAllTime ?? 0)
 
-  const currentComments = skill.stats.comments
+  const currentComments = skill.stats.comments ?? 0
   const nextDownloads = Math.max(0, currentDownloads + (deltas.downloads ?? 0))
   const nextStars = Math.max(0, currentStars + (deltas.stars ?? 0))
   const nextComments = Math.max(0, currentComments + (deltas.comments ?? 0))
