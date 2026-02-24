@@ -352,6 +352,7 @@ describe('syncGitHubProfile', () => {
 
     await syncGitHubProfile({ runQuery, runMutation } as never, 'users:1' as never)
 
+    expect(runMutation).toHaveBeenCalledTimes(1)
     expect(runMutation).toHaveBeenCalledWith(internal.users.syncGitHubProfileInternal, {
       userId: 'users:1',
       name: 'new',
