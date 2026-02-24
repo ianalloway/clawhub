@@ -144,6 +144,9 @@ describe('skills utils', () => {
     expect(sanitizePath('')).toBeNull()
     expect(sanitizePath('file\0.md')).toBeNull()
     expect(sanitizePath('\0')).toBeNull()
+    expect(sanitizePath('file\n.md')).toBeNull()
+    expect(sanitizePath('file\r.md')).toBeNull()
+    expect(sanitizePath('file\t.md')).toBeNull()
   })
 
   it('detects text files', () => {
