@@ -813,6 +813,18 @@ describe('httpApiV1 handlers', () => {
     expect(response.status).toBe(413)
   })
 
+  it('rejects file path with traversal sequences', async () => {
+    const runQuery = vi.fn().mockResolvedValue(null)
+    const runMutation = vi.fn().mockResolvedValue(okRate())
+    for (const badPath of ['../etc/passwd', 'a\\b.md', 'file\0.md', 'file\n.md']) {
+      const response = await __handlers.skillsGetRouterV1Handler(
+        makeCtx({ runQuery, runMutation }),
+        new Request(`https://example.com/api/v1/skills/demo/file?path=${encodeURIComponent(badPath)}`),
+      )
+      expect(response.status).toBe(400)
+    }
+  })
+
   it('publish json succeeds', async () => {
     vi.mocked(requireApiTokenUser).mockResolvedValueOnce({
       userId: 'users:1',

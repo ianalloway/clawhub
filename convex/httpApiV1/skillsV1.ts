@@ -3,6 +3,7 @@ import type { Doc, Id } from '../_generated/dataModel'
 import type { ActionCtx } from '../_generated/server'
 import { getOptionalApiTokenUserId, requireApiTokenUser } from '../lib/apiTokenAuth'
 import { applyRateLimit, parseBearerToken } from '../lib/httpRateLimit'
+import { sanitizePath } from '../lib/skills'
 import { publishVersionForUser } from '../skills'
 import {
   MAX_RAW_FILE_BYTES,
@@ -371,8 +372,10 @@ export async function skillsGetRouterV1Handler(ctx: ActionCtx, request: Request)
 
   if (second === 'file' && segments.length === 2) {
     const url = new URL(request.url)
-    const path = url.searchParams.get('path')?.trim()
-    if (!path) return text('Missing path', 400, rate.headers)
+    const rawPath = url.searchParams.get('path')?.trim()
+    if (!rawPath) return text('Missing path', 400, rate.headers)
+    const sanitized = sanitizePath(rawPath)
+    if (!sanitized) return text('Invalid path', 400, rate.headers)
     const versionParam = url.searchParams.get('version')?.trim()
     const tagParam = url.searchParams.get('tag')?.trim()
 
@@ -396,7 +399,7 @@ export async function skillsGetRouterV1Handler(ctx: ActionCtx, request: Request)
     if (!version) return text('Version not found', 404, rate.headers)
     if (version.softDeletedAt) return text('Version not available', 410, rate.headers)
 
-    const normalized = path.trim()
+    const normalized = sanitized
     const normalizedLower = normalized.toLowerCase()
     const file =
       version.files.find((entry) => entry.path === normalized) ??
