@@ -31,4 +31,32 @@ describe('skill backfill', () => {
     expect(patch.summary).toBeUndefined()
     expect(patch.parsed?.frontmatter.description).toBe('Hello')
   })
+
+  it('returns empty patch when nothing has changed', () => {
+    const readmeText = `---\ndescription: Same\n---\nBody`
+    const first = buildSkillSummaryBackfillPatch({ readmeText })
+    const second = buildSkillSummaryBackfillPatch({
+      readmeText,
+      currentSummary: first.parsed?.frontmatter.description as string,
+      currentParsed: first.parsed,
+    })
+    expect(second.summary).toBeUndefined()
+    expect(second.parsed).toBeUndefined()
+  })
+
+  it('treats deeply nested objects beyond the depth limit as unequal', () => {
+    // Build an object nested 25 levels deep (beyond the 20-level limit)
+    let deep: Record<string, unknown> = { value: 'leaf' }
+    for (let i = 0; i < 25; i++) {
+      deep = { child: deep }
+    }
+    const readmeText = `---\ndescription: Nested\n---\nBody`
+    const patch = buildSkillSummaryBackfillPatch({
+      readmeText,
+      currentSummary: 'Nested',
+      currentParsed: { frontmatter: { description: 'Nested' }, metadata: deep },
+    })
+    // parsed differs (deep object treated as unequal past limit), so patch.parsed is set
+    expect(patch.parsed).toBeDefined()
+  })
 })

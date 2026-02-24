@@ -142,6 +142,8 @@ describe('skills utils', () => {
     expect(sanitizePath('/rooted.txt')).toBe('rooted.txt')
     expect(sanitizePath('bad\\path.txt')).toBeNull()
     expect(sanitizePath('')).toBeNull()
+    expect(sanitizePath('file\0.md')).toBeNull()
+    expect(sanitizePath('\0')).toBeNull()
   })
 
   it('detects text files', () => {

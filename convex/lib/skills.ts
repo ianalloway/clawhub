@@ -142,7 +142,7 @@ export function isTextFile(path: string, contentType?: string | null) {
 
 export function sanitizePath(path: string) {
   const trimmed = path.trim().replace(/^\/+/, '')
-  if (!trimmed || trimmed.includes('..') || trimmed.includes('\\')) {
+  if (!trimmed || trimmed.includes('..') || trimmed.includes('\\') || trimmed.includes('\0')) {
     return null
   }
   return trimmed

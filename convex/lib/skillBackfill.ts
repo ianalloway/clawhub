@@ -38,15 +38,18 @@ export function buildSkillSummaryBackfillPatch(args: {
   return patch
 }
 
-function deepEqual(a: unknown, b: unknown): boolean {
+const DEEP_EQUAL_MAX_DEPTH = 20
+
+function deepEqual(a: unknown, b: unknown, depth = 0): boolean {
   if (a === b) return true
+  if (depth >= DEEP_EQUAL_MAX_DEPTH) return false
   if (!a || !b) return a === b
   if (typeof a !== typeof b) return false
   if (Array.isArray(a) || Array.isArray(b)) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false
     if (a.length !== b.length) return false
     for (let i = 0; i < a.length; i++) {
-      if (!deepEqual(a[i], b[i])) return false
+      if (!deepEqual(a[i], b[i], depth + 1)) return false
     }
     return true
   }
@@ -59,7 +62,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
     for (let i = 0; i < aKeys.length; i++) {
       if (aKeys[i] !== bKeys[i]) return false
       const key = aKeys[i] as string
-      if (!deepEqual(aObj[key], bObj[key])) return false
+      if (!deepEqual(aObj[key], bObj[key], depth + 1)) return false
     }
     return true
   }
