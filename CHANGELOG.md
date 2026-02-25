@@ -16,6 +16,7 @@
 - API performance: batch resolve skill/soul tags in v1 list/get endpoints (fewer action->query round-trips) (#112) (thanks @mkrokosz).
 - Skills: reserve deleted slugs for prior owners (90-day cooldown) to prevent squatting; add admin reclaim flow (#298) (thanks @autogame-17).
 - Moderation: ban flow soft-deletes owned skills (reversible) and removes them from vector search (#298) (thanks @autogame-17).
+- LLM helpers: centralize OpenAI Responses text extraction for changelog/summary/eval flows (#502) (thanks @ianalloway).
 
 ### Fixed
 - Admin API: `POST /api/v1/users/reclaim` now performs non-destructive root-slug owner transfer
