@@ -2,12 +2,15 @@
 import { act, render } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  convexReactMocks,
+  resetConvexReactMocks,
+  setupDefaultConvexReactMocks,
+} from './helpers/convexReactMocks'
 
 import { SkillsIndex } from '../routes/skills/index'
 
 const navigateMock = vi.fn()
-const useActionMock = vi.fn()
-const usePaginatedQueryMock = vi.fn()
 let searchMock: Record<string, unknown> = {}
 
 vi.mock('@tanstack/react-router', () => ({
@@ -20,17 +23,17 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 vi.mock('convex/react', () => ({
-  useAction: (...args: unknown[]) => useActionMock(...args),
-  usePaginatedQuery: (...args: unknown[]) => usePaginatedQueryMock(...args),
+  useAction: (...args: unknown[]) => convexReactMocks.useAction(...args),
+  useQuery: (...args: unknown[]) => convexReactMocks.useQuery(...args),
+  usePaginatedQuery: (...args: unknown[]) => convexReactMocks.usePaginatedQuery(...args),
 }))
 
 describe('SkillsIndex load-more observer', () => {
   beforeEach(() => {
-    usePaginatedQueryMock.mockReset()
-    useActionMock.mockReset()
+    resetConvexReactMocks()
     navigateMock.mockReset()
     searchMock = {}
-    useActionMock.mockReturnValue(() => Promise.resolve([]))
+    setupDefaultConvexReactMocks()
   })
 
   afterEach(() => {
@@ -39,7 +42,7 @@ describe('SkillsIndex load-more observer', () => {
 
   it('triggers one request for repeated intersection callbacks', async () => {
     const loadMorePaginated = vi.fn()
-    usePaginatedQueryMock.mockReturnValue({
+    convexReactMocks.usePaginatedQuery.mockReturnValue({
       results: [makeListResult('skill-0', 'Skill 0')],
       status: 'CanLoadMore',
       loadMore: loadMorePaginated,

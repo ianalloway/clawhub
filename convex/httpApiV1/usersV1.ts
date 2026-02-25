@@ -163,7 +163,9 @@ async function handleAdminRestore(
 
 /**
  * POST /api/v1/users/reclaim
- * Admin-only: reclaim squatted slugs and reserve them for the rightful owner.
+ * Admin-only: reclaim root slugs for the rightful owner.
+ * Default behavior is non-destructive owner transfer for existing skills
+ * (preserves versions/stats/metadata) and leaves missing slugs untouched.
  * Body: { handle: string, slugs: string[], reason?: string }
  */
 async function handleAdminReclaim(
@@ -185,16 +187,17 @@ async function handleAdminReclaim(
   const targetUser = await ctx.runQuery(api.users.getByHandle, { handle })
   if (!targetUser?._id) return text('User not found', 404, headers)
 
-  const results: Array<{ slug: string; ok: boolean; error?: string }> = []
+  const results: Array<{ slug: string; ok: boolean; action?: string; error?: string }> = []
   for (const slug of slugs) {
     try {
-      await ctx.runMutation(internal.skills.reclaimSlugInternal, {
+      const result = (await ctx.runMutation(internal.skills.reclaimSlugInternal, {
         actorUserId,
         slug: slug.trim().toLowerCase(),
         rightfulOwnerUserId: targetUser._id,
         reason,
-      })
-      results.push({ slug, ok: true })
+        transferRootSlugOnly: true,
+      })) as { action?: string }
+      results.push({ slug, ok: true, action: result.action })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Reclaim failed'
       results.push({ slug, ok: false, error: message })

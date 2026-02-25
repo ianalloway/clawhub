@@ -11,6 +11,9 @@ import { buildUserSearchResults } from './lib/userSearch'
 
 const DEFAULT_ROLE = 'user'
 const ADMIN_HANDLE = 'steipete'
+const MAX_USER_LIST_LIMIT = 200
+const MAX_USER_SEARCH_SCAN = 5_000
+const MIN_USER_SEARCH_SCAN = 500
 
 export const getById = query({
   args: { userId: v.id('users') },
@@ -33,10 +36,9 @@ export const searchInternal = internalQuery({
     if (!actor || actor.deletedAt || actor.deactivatedAt) throw new Error('Unauthorized')
     assertAdmin(actor)
 
-    const limit = Math.min(Math.max(args.limit ?? 20, 1), 200)
-    const users = await ctx.db.query('users').order('desc').collect()
-    const result = buildUserSearchResults(users, args.query)
-    const items = result.items.slice(0, limit).map((user) => ({
+    const limit = clampInt(args.limit ?? 20, 1, MAX_USER_LIST_LIMIT)
+    const result = await queryUsersForAdminList(ctx, { limit, search: args.query })
+    const items = result.items.map((user) => ({
       userId: user._id,
       handle: user.handle ?? null,
       displayName: user.displayName ?? null,
@@ -268,13 +270,40 @@ export const list = query({
   handler: async (ctx, args) => {
     const { user } = await requireUser(ctx)
     assertAdmin(user)
-    const limit = Math.min(Math.max(args.limit ?? 50, 1), 200)
-    const query = args.search?.trim().toLowerCase()
-    const users = await ctx.db.query('users').order('desc').collect()
-    const result = buildUserSearchResults(users, query)
-    return { items: result.items.slice(0, limit), total: result.total }
+    const limit = clampInt(args.limit ?? 50, 1, MAX_USER_LIST_LIMIT)
+    return queryUsersForAdminList(ctx, { limit, search: args.search })
   },
 })
+
+function normalizeSearchQuery(search?: string) {
+  const trimmed = search?.trim().toLowerCase()
+  return trimmed ? trimmed : undefined
+}
+
+function computeUserSearchScanLimit(limit: number) {
+  return clampInt(limit * 10, MIN_USER_SEARCH_SCAN, MAX_USER_SEARCH_SCAN)
+}
+
+async function queryUsersForAdminList(
+  ctx: { db: { query: (table: 'users') => { order: (order: 'desc') => { take: (n: number) => Promise<Doc<'users'>[]> } } } },
+  args: { limit: number; search?: string },
+) {
+  const normalizedSearch = normalizeSearchQuery(args.search)
+  const orderedUsers = ctx.db.query('users').order('desc')
+
+  if (!normalizedSearch) {
+    const items = await orderedUsers.take(args.limit)
+    return { items, total: items.length }
+  }
+
+  const scannedUsers = await orderedUsers.take(computeUserSearchScanLimit(args.limit))
+  const result = buildUserSearchResults(scannedUsers, normalizedSearch)
+  return { items: result.items.slice(0, args.limit), total: result.total }
+}
+
+function clampInt(value: number, min: number, max: number) {
+  return Math.min(Math.max(Math.trunc(value), min), max)
+}
 
 export const getByHandle = query({
   args: { handle: v.string() },

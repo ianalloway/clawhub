@@ -3,6 +3,10 @@ import { internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import type { ActionCtx } from './_generated/server'
 import { internalAction, internalMutation, internalQuery } from './_generated/server'
+import {
+  countPublicSkillsForGlobalStats,
+  setGlobalPublicSkillsCount,
+} from './lib/globalStats'
 
 const DEFAULT_BATCH_SIZE = 200
 const MAX_BATCH_SIZE = 1000
@@ -299,3 +303,11 @@ export const runReconcileSkillStarCountsInternal = internalAction({
 function clampInt(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
+
+export const updateGlobalStatsInternal = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const count = await countPublicSkillsForGlobalStats(ctx)
+    await setGlobalPublicSkillsCount(ctx, count)
+  },
+})

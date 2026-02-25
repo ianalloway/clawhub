@@ -42,8 +42,8 @@ test('header menu routes render', async ({ page }) => {
     }
 
     if (label === 'Search') {
-      await expect(page).toHaveURL(/\/?(\?|$)/)
-      await expect(page.locator('h1', { hasText: 'ClawHub' })).toBeVisible()
+      await expect(page).toHaveURL(/\/skills(\?|$)/)
+      await expect(page.locator('h1', { hasText: 'Skills' })).toBeVisible()
     }
   }
 })

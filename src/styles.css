@@ -2289,6 +2289,66 @@ code {
   padding-right: 4px;
 }
 
+.file-browser {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .file-browser {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.3fr);
+    align-items: start;
+  }
+}
+
+.file-row-button {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.file-row-button:focus-visible {
+  outline: 3px solid rgba(255, 107, 74, 0.25);
+  outline-offset: 2px;
+}
+
+.file-row-button.is-active {
+  border-color: var(--ink);
+  box-shadow: 0 8px 18px rgba(29, 26, 23, 0.12);
+}
+
+.file-viewer {
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.file-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.file-viewer-body {
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.file-viewer-code {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
 .version-scroll {
   max-height: 320px;
   overflow: auto;
@@ -3604,7 +3664,7 @@ html.theme-transition::view-transition-new(theme) {
   gap: 12px;
   padding: 10px 14px;
   cursor: pointer;
-  user-select: none;
+  user-select: text;
   border-radius: 12px;
   transition: background 0.15s ease;
 }
@@ -3625,6 +3685,7 @@ html.theme-transition::view-transition-new(theme) {
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  user-select: none;
 }
 
 .analysis-detail-toggle .chevron {
@@ -3640,6 +3701,8 @@ html.theme-transition::view-transition-new(theme) {
   color: var(--ink);
   line-height: 1.45;
   flex: 1;
+  cursor: text;
+  user-select: text;
 }
 
 .analysis-body {

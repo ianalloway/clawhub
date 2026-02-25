@@ -86,6 +86,12 @@ Stores your API token + cached registry URL.
   - `<workdir>/.clawhub/lock.json` (legacy `.clawdhub`)
   - `<skill>/.clawhub/origin.json` (legacy `.clawdhub`)
 
+### `uninstall <slug>`
+
+- Removes `<workdir>/<dir>/<slug>` and deletes the lockfile entry.
+- Interactive: asks for confirmation.
+- Non-interactive (`--no-input`): requires `--yes`.
+
 ### `list`
 
 - Reads `<workdir>/.clawhub/lock.json` (legacy `.clawdhub`).
@@ -105,24 +111,24 @@ Stores your API token + cached registry URL.
 
 ### `delete <slug>`
 
-- Soft-delete a skill (moderator/admin only).
+- Soft-delete a skill (owner, moderator, or admin).
 - Calls `DELETE /api/v1/skills/{slug}`.
 - `--yes` skips confirmation.
 
 ### `undelete <slug>`
 
-- Restore a hidden skill (moderator/admin only).
+- Restore a hidden skill (owner, moderator, or admin).
 - Calls `POST /api/v1/skills/{slug}/undelete`.
 - `--yes` skips confirmation.
 
 ### `hide <slug>`
 
-- Hide a skill (moderator/admin only).
+- Hide a skill (owner, moderator, or admin).
 - Alias for `delete`.
 
 ### `unhide <slug>`
 
-- Unhide a skill (moderator/admin only).
+- Unhide a skill (owner, moderator, or admin).
 - Alias for `undelete`.
 
 ### `ban-user <handleOrId>`

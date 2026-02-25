@@ -14,11 +14,15 @@ function normalizeCompact(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
+function toSearchText(value: unknown) {
+  return typeof value === 'string' ? value.toLowerCase() : ''
+}
+
 function scoreUser(user: Doc<'users'>, query: string, compactQuery: string) {
-  const handle = user.handle?.toLowerCase() ?? ''
-  const name = user.name?.toLowerCase() ?? ''
-  const displayName = user.displayName?.toLowerCase() ?? ''
-  const email = user.email?.toLowerCase() ?? ''
+  const handle = toSearchText(user.handle)
+  const name = toSearchText(user.name)
+  const displayName = toSearchText(user.displayName)
+  const email = toSearchText(user.email)
   const id = String(user._id).toLowerCase()
 
   let score = 0

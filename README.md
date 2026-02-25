@@ -13,6 +13,7 @@ onlycrabs.ai is the **SOUL.md registry**: publish and share system lore the same
 
 Live: `https://clawhub.ai`
 onlycrabs.ai: `https://onlycrabs.ai`
+Vision: [`VISION.md`](VISION.md)
 
 ## What you can do with it
 
@@ -36,6 +37,25 @@ onlycrabs.ai: `https://onlycrabs.ai`
 - Backend: Convex (DB + file storage + HTTP actions) + Convex Auth (GitHub OAuth).
 - Search: OpenAI embeddings (`text-embedding-3-small`) + Convex vector search.
 - API schema + routes: `packages/schema` (`clawhub-schema`).
+
+## CLI
+
+Common CLI flows:
+
+- Auth: `clawhub login`, `clawhub whoami`
+- Discover: `clawhub search ...`, `clawhub explore`
+- Manage local installs: `clawhub install <slug>`, `clawhub uninstall <slug>`, `clawhub list`, `clawhub update --all`
+- Inspect without installing: `clawhub inspect <slug>`
+- Publish/sync: `clawhub publish <path>`, `clawhub sync`
+
+Docs: `docs/quickstart.md`, `docs/cli.md`.
+
+### Removal permissions
+
+- `clawhub uninstall <slug>` only removes a local install on your machine.
+- Uploaded registry skills use soft-delete/restore (`clawhub delete <slug>` / `clawhub undelete <slug>` or API equivalents).
+- Soft-delete/restore is allowed for the skill owner, moderators, and admins.
+- Hard delete is admin-only (management tools / ban flows).
 
 
 ## Telemetry

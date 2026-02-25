@@ -2,12 +2,15 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  convexReactMocks,
+  resetConvexReactMocks,
+  setupDefaultConvexReactMocks,
+} from './helpers/convexReactMocks'
 
 import { SkillsIndex } from '../routes/skills/index'
 
 const navigateMock = vi.fn()
-const useActionMock = vi.fn()
-const usePaginatedQueryMock = vi.fn()
 let searchMock: Record<string, unknown> = {}
 
 vi.mock('@tanstack/react-router', () => ({
@@ -20,19 +23,19 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 vi.mock('convex/react', () => ({
-  useAction: (...args: unknown[]) => useActionMock(...args),
-  usePaginatedQuery: (...args: unknown[]) => usePaginatedQueryMock(...args),
+  useAction: (...args: unknown[]) => convexReactMocks.useAction(...args),
+  useQuery: (...args: unknown[]) => convexReactMocks.useQuery(...args),
+  usePaginatedQuery: (...args: unknown[]) => convexReactMocks.usePaginatedQuery(...args),
 }))
 
 describe('SkillsIndex', () => {
   beforeEach(() => {
-    usePaginatedQueryMock.mockReset()
-    useActionMock.mockReset()
+    resetConvexReactMocks()
     navigateMock.mockReset()
     searchMock = {}
-    useActionMock.mockReturnValue(() => Promise.resolve([]))
+    setupDefaultConvexReactMocks()
     // Default: return empty results with Exhausted status
-    usePaginatedQueryMock.mockReturnValue({
+    convexReactMocks.usePaginatedQuery.mockReturnValue({
       results: [],
       status: 'Exhausted',
       loadMore: vi.fn(),
@@ -47,9 +50,9 @@ describe('SkillsIndex', () => {
   it('requests the first skills page', () => {
     render(<SkillsIndex />)
     // usePaginatedQuery should be called with the API endpoint and sort/dir args
-    expect(usePaginatedQueryMock).toHaveBeenCalledWith(
+    expect(convexReactMocks.usePaginatedQuery).toHaveBeenCalledWith(
       expect.anything(),
-      { sort: 'downloads', dir: 'desc', nonSuspiciousOnly: false },
+      { sort: 'downloads', dir: 'desc', highlightedOnly: false, nonSuspiciousOnly: false },
       { initialNumItems: 25 },
     )
   })
@@ -59,16 +62,100 @@ describe('SkillsIndex', () => {
     expect(screen.getByText('No skills match that filter.')).toBeTruthy()
   })
 
+  it('shows loading state instead of empty state when pagination is not exhausted', () => {
+    // When status is not 'Exhausted', we should show loading, not "No skills match"
+    convexReactMocks.usePaginatedQuery.mockReturnValue({
+      results: [],
+      status: 'CanLoadMore',
+      loadMore: vi.fn(),
+    })
+    render(<SkillsIndex />)
+    expect(screen.getByText('Loading skills…')).toBeTruthy()
+    expect(screen.queryByText('No skills match that filter.')).toBeNull()
+  })
+
+  it('keeps load-more reachable when results are empty but pagination can continue', () => {
+    convexReactMocks.usePaginatedQuery.mockReturnValue({
+      results: [],
+      status: 'CanLoadMore',
+      loadMore: vi.fn(),
+    })
+    render(<SkillsIndex />)
+    expect(screen.getByRole('button', { name: 'Load more' })).toBeTruthy()
+  })
+
+  it('shows loading indicator during pagination instead of hiding load more', () => {
+    // When status is 'LoadingMore', keep showing the load more area with loading text
+    const mockEntry = {
+      skill: {
+        _id: 'test-id',
+        slug: 'test-skill',
+        displayName: 'Test Skill',
+        stats: { downloads: 0, installsAllTime: 0, stars: 0 },
+      },
+      latestVersion: null,
+      owner: null,
+      ownerHandle: null,
+    }
+    convexReactMocks.usePaginatedQuery.mockReturnValue({
+      results: [mockEntry],
+      status: 'LoadingMore',
+      loadMore: vi.fn(),
+    })
+    render(<SkillsIndex />)
+    // The load more button should still be visible with loading state
+    expect(screen.getByText('Loading…')).toBeTruthy()
+  })
+
+  it('handles LoadingMore with empty results gracefully', () => {
+    // Edge case: user changes filter while loading more, results become empty
+    convexReactMocks.usePaginatedQuery.mockReturnValue({
+      results: [],
+      status: 'LoadingMore',
+      loadMore: vi.fn(),
+    })
+    render(<SkillsIndex />)
+    // Should show loading message, not "No skills match"
+    expect(screen.getByText('Loading skills…')).toBeTruthy()
+    expect(screen.queryByText('No skills match that filter.')).toBeNull()
+    // Keep the pagination control mounted so loading can continue.
+    expect(screen.getByText('Loading…')).toBeTruthy()
+  })
+
+  it('shows empty state immediately when search returns no results', async () => {
+    // When searching and results are empty, show "No skills match" not "Loading"
+    // This tests the hasQuery condition in the empty state logic
+    searchMock = { q: 'nonexistent-skill-xyz' }
+    const actionFn = vi.fn().mockResolvedValue([])
+    convexReactMocks.useAction.mockReturnValue(actionFn)
+    // Pagination is skipped in search mode, so status stays 'LoadingFirstPage'
+    convexReactMocks.usePaginatedQuery.mockReturnValue({
+      results: [],
+      status: 'LoadingFirstPage',
+      loadMore: vi.fn(),
+    })
+    vi.useFakeTimers()
+
+    render(<SkillsIndex />)
+    await act(async () => {
+      await vi.runAllTimersAsync()
+    })
+
+    // Should show empty state, not loading
+    expect(screen.getByText('No skills match that filter.')).toBeTruthy()
+    expect(screen.queryByText('Loading skills…')).toBeNull()
+  })
+
   it('skips list query and calls search when query is set', async () => {
     searchMock = { q: 'remind' }
     const actionFn = vi.fn().mockResolvedValue([])
-    useActionMock.mockReturnValue(actionFn)
+    convexReactMocks.useAction.mockReturnValue(actionFn)
     vi.useFakeTimers()
 
     render(<SkillsIndex />)
 
     // usePaginatedQuery should be called with 'skip' when there's a search query
-    expect(usePaginatedQueryMock).toHaveBeenCalledWith(expect.anything(), 'skip', {
+    expect(convexReactMocks.usePaginatedQuery).toHaveBeenCalledWith(expect.anything(), 'skip', {
       initialNumItems: 25,
     })
     await act(async () => {
@@ -98,7 +185,7 @@ describe('SkillsIndex', () => {
       .fn()
       .mockResolvedValueOnce(makeSearchResults(25))
       .mockResolvedValueOnce(makeSearchResults(50))
-    useActionMock.mockReturnValue(actionFn)
+    convexReactMocks.useAction.mockReturnValue(actionFn)
     vi.useFakeTimers()
 
     render(<SkillsIndex />)
@@ -129,7 +216,7 @@ describe('SkillsIndex', () => {
         makeSearchEntry({ slug: 'skill-b', displayName: 'Skill B', stars: 5, updatedAt: 200 }),
         makeSearchEntry({ slug: 'skill-c', displayName: 'Skill C', stars: 4, updatedAt: 999 }),
       ])
-    useActionMock.mockReturnValue(actionFn)
+    convexReactMocks.useAction.mockReturnValue(actionFn)
     vi.useFakeTimers()
 
     render(<SkillsIndex />)
@@ -154,7 +241,7 @@ describe('SkillsIndex', () => {
         makeSearchResult('newer-low-score', 'Newer Low Score', 0.1, 2000),
         makeSearchResult('older-high-score', 'Older High Score', 0.9, 1000),
       ])
-    useActionMock.mockReturnValue(actionFn)
+    convexReactMocks.useAction.mockReturnValue(actionFn)
     vi.useFakeTimers()
 
     render(<SkillsIndex />)
@@ -174,9 +261,20 @@ describe('SkillsIndex', () => {
     searchMock = { nonSuspicious: true }
     render(<SkillsIndex />)
 
-    expect(usePaginatedQueryMock).toHaveBeenCalledWith(
+    expect(convexReactMocks.usePaginatedQuery).toHaveBeenCalledWith(
       expect.anything(),
-      { sort: 'downloads', dir: 'desc', nonSuspiciousOnly: true },
+      { sort: 'downloads', dir: 'desc', highlightedOnly: false, nonSuspiciousOnly: true },
+      { initialNumItems: 25 },
+    )
+  })
+
+  it('passes highlightedOnly to list query when filter is active', () => {
+    searchMock = { highlighted: true }
+    render(<SkillsIndex />)
+
+    expect(convexReactMocks.usePaginatedQuery).toHaveBeenCalledWith(
+      expect.anything(),
+      { sort: 'downloads', dir: 'desc', highlightedOnly: true, nonSuspiciousOnly: false },
       { initialNumItems: 25 },
     )
   })

@@ -167,7 +167,7 @@ describe('httpApiV1 handlers', () => {
   it('users/reclaim calls reclaim mutation for admin', async () => {
     const runMutation = vi.fn(async (_mutation: unknown, args: Record<string, unknown>) => {
       if (isRateLimitArgs(args)) return okRate()
-      return { ok: true }
+      return { ok: true, action: 'ownership_transferred' }
     })
     const runQuery = vi.fn(async (_query: unknown, args: Record<string, unknown>) => {
       if ('handle' in args) return { _id: 'users:target' }
@@ -194,12 +194,14 @@ describe('httpApiV1 handlers', () => {
       slug: 'a',
       rightfulOwnerUserId: 'users:target',
       reason: 'r',
+      transferRootSlugOnly: true,
     })
     expect(reclaimCalls[1]?.[1]).toMatchObject({
       actorUserId: 'users:admin',
       slug: 'b',
       rightfulOwnerUserId: 'users:target',
       reason: 'r',
+      transferRootSlugOnly: true,
     })
   })
 

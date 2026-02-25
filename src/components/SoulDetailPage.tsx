@@ -4,9 +4,11 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '../../convex/_generated/api'
 import type { Doc } from '../../convex/_generated/dataModel'
+import { SoulStatsTripletLine } from './SoulStats'
 import type { PublicSoul, PublicUser } from '../lib/publicUser'
 import { isModerator } from '../lib/roles'
 import { useAuthStatus } from '../lib/useAuthStatus'
+import { stripFrontmatter } from './skillDetailUtils'
 
 type SoulDetailPageProps = {
   slug: string
@@ -113,7 +115,7 @@ export function SoulDetailPage({ slug }: SoulDetailPageProps) {
               </h1>
               <p className="section-subtitle">{soul.summary ?? 'No summary provided.'}</p>
               <div className="stat">
-                ⭐ {soul.stats.stars} · ⤓ {soul.stats.downloads} · {soul.stats.versions} versions
+                <SoulStatsTripletLine stats={soul.stats} versionSuffix="versions" />
               </div>
               {ownerHandle ? (
                 <div className="stat">
@@ -252,12 +254,4 @@ export function SoulDetailPage({ slug }: SoulDetailPageProps) {
       </div>
     </main>
   )
-}
-
-function stripFrontmatter(content: string) {
-  const normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  if (!normalized.startsWith('---')) return content
-  const endIndex = normalized.indexOf('\n---', 3)
-  if (endIndex === -1) return content
-  return normalized.slice(endIndex + 4).replace(/^\n+/, '')
 }
