@@ -12,19 +12,20 @@ export async function starsPostRouterV1Handler(ctx: ActionCtx, request: Request)
   if (segments.length !== 1) return text('Not found', 404, rate.headers)
   const slug = segments[0]?.trim().toLowerCase() ?? ''
 
-  try {
-    const { userId } = await requireApiTokenUser(ctx, request)
-    const skill = await ctx.runQuery(internal.skills.getSkillBySlugInternal, { slug })
-    if (!skill) return text('Skill not found', 404, rate.headers)
+  // Authenticate first — keep auth errors isolated so DB/mutation failures
+  // don't get misreported as 401 Unauthorized.
+  const auth = await requireApiTokenUser(ctx, request).catch(() => null)
+  if (!auth) return text('Unauthorized', 401, rate.headers)
+  const { userId } = auth
 
-    const result = await ctx.runMutation(internal.stars.addStarInternal, {
-      userId,
-      skillId: skill._id,
-    })
-    return json(result, 200, rate.headers)
-  } catch {
-    return text('Unauthorized', 401, rate.headers)
-  }
+  const skill = await ctx.runQuery(internal.skills.getSkillBySlugInternal, { slug })
+  if (!skill) return text('Skill not found', 404, rate.headers)
+
+  const result = await ctx.runMutation(internal.stars.addStarInternal, {
+    userId,
+    skillId: skill._id,
+  })
+  return json(result, 200, rate.headers)
 }
 
 export async function starsDeleteRouterV1Handler(ctx: ActionCtx, request: Request) {
@@ -35,17 +36,18 @@ export async function starsDeleteRouterV1Handler(ctx: ActionCtx, request: Reques
   if (segments.length !== 1) return text('Not found', 404, rate.headers)
   const slug = segments[0]?.trim().toLowerCase() ?? ''
 
-  try {
-    const { userId } = await requireApiTokenUser(ctx, request)
-    const skill = await ctx.runQuery(internal.skills.getSkillBySlugInternal, { slug })
-    if (!skill) return text('Skill not found', 404, rate.headers)
+  // Authenticate first — keep auth errors isolated so DB/mutation failures
+  // don't get misreported as 401 Unauthorized.
+  const auth = await requireApiTokenUser(ctx, request).catch(() => null)
+  if (!auth) return text('Unauthorized', 401, rate.headers)
+  const { userId } = auth
 
-    const result = await ctx.runMutation(internal.stars.removeStarInternal, {
-      userId,
-      skillId: skill._id,
-    })
-    return json(result, 200, rate.headers)
-  } catch {
-    return text('Unauthorized', 401, rate.headers)
-  }
+  const skill = await ctx.runQuery(internal.skills.getSkillBySlugInternal, { slug })
+  if (!skill) return text('Skill not found', 404, rate.headers)
+
+  const result = await ctx.runMutation(internal.stars.removeStarInternal, {
+    userId,
+    skillId: skill._id,
+  })
+  return json(result, 200, rate.headers)
 }
