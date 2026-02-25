@@ -3940,3 +3940,99 @@ html.theme-transition::view-transition-new(theme) {
   background: rgba(243, 201, 122, 0.18);
   color: #f3c97a;
 }
+
+/* ── Featured Collections ────────────────────────────────── */
+.collections-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.collection-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.collection-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--collection-accent, var(--accent));
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.collection-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: var(--collection-accent, var(--accent));
+}
+
+.collection-card:hover::before {
+  opacity: 1;
+}
+
+.collection-emoji {
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.collection-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.collection-desc {
+  font-size: 0.83rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.collection-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.collection-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+
+.collection-tag-more {
+  opacity: 0.6;
+}
+
+[data-theme="dark"] .collection-card {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .collection-tag {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ink-soft);
+}
